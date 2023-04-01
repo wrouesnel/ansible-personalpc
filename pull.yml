@@ -1,0 +1,5 @@
+---
+# Pull local settings into the repository for normalization.
+- hosts: localhost
+  connection: local
+  tasks: []

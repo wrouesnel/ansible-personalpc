@@ -1,0 +1,5 @@
+---
+# Deploy/update a personal computer system.
+- hosts: localhost
+  connection: local
+  tasks: []
