@@ -8,7 +8,9 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
-source include.sh
+source "${SCRIPT_DIR}/include.sh"
+
+cd "$SCRIPT_DIR" || fatal 1 "Failed to change to $SCRIPT_DIR"
 
 requires=(
     "git"
