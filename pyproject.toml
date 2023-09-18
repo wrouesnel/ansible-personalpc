@@ -1,0 +1,125 @@
+[tool.poetry]
+name = "ansible-personalpc"
+version = "0.1.0"
+description = "Bootstrap and configuration for my personal Ubuntu"
+authors = ["Will Rouesnel <wrouesnel@wrouesnel.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "ansible_personalpc"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ansible = "^8.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | venv
+    | venv\..*
+    | _build
+    | buck-out
+    | build
+    | dist
+    | setup\.py
+    | \.ipynb
+    | migrations
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+filter_files = true
+py_version = 39
+skip_gitignore = true
+skip_glob = [ "*.ipynb" ]
+
+[tool.mypy]
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | venv
+    | venv\..*
+    | _build
+    | buck-out
+    | build
+    | dist
+    | setup\.py
+    | \.ipynb
+    | migrations
+  )/
+)
+'''
+
+mypy_path = "stubs"
+python_version = "3.9"
+
+namespace_packages = true
+
+disallow_any_unimported = false
+disallow_any_expr = false
+
+# Can't practically disable yet.
+disallow_any_decorated = false
+
+# Can't practically disable Any yet.
+disallow_any_explicit = false
+
+# Also can't practically disable Any in generics.
+disallow_any_generics = false
+
+# This winds up not being practical at the moment
+disallow_subclassing_any = false
+
+disallow_untyped_calls = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+check_untyped_defs = true
+
+# Need to allow for click at this time
+disallow_untyped_decorators = false
+
+no_implicit_optional = true
+strict_optional = true
+
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_return_any = true
+warn_unreachable = true
+
+show_none_errors = false
+ignore_errors = false
+
+allow_untyped_globals = false
+allow_redefinition = false
+implicit_reexport = true
+
+strict_equality = true
+
+# Important!
+show_absolute_path = true
+
+warn_unused_configs = true
