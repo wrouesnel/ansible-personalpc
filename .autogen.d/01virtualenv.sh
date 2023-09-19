@@ -20,13 +20,16 @@ check_requirements "${requires[@]}"
 log "Checking for correct Python version"
 python_shortversion=$(cat .python-version|cut -d '.' -f1,2)
 if command -v pyenv >/dev/null ; then
-    if ! pyenv which python; then
+    if ! pyenv which python >/dev/null 2>&1 && [ "${python_shortversion}" != "system" ]; then
         log "Attempting to install missing Python version"
         if ! pyenv install; then
             log "Failed to install missing Python version"
         fi
     fi
-    python="$(pyenv which python)"
+    python="$(pyenv which python 2>/dev/null)"
+    if [ -z "${python}" ]; then
+        python="$(pyenv which python3)"
+    fi
 else
     if command -v python${python_shortversion} >/dev/null; then
         python="$(command -v python${python_shortversion})"
@@ -49,7 +52,7 @@ if ! poetry env use "${python}"; then
     fatal 1 "Poetry failed to set python version"
 fi
 
-index_url="$(pip config --global get global.index-url)"
+index_url="$(pip config --global get global.index-url 2>/dev/null)"
 if [ ! -z "$index_url" ]; then
     log "Alternate default source found - setting as default for Poetry"
     if ! poetry source add --priority=default public-pypi "$index_url" ; then
