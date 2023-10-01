@@ -1,0 +1,13 @@
+---
+# General system configuration which doesn't fit elsewhere
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Deploy configuration templates
+    template:
+      src: etc/default/localnetwork.j2
+      dest: /etc/default/localnetwork
+      owner: root
+      group: root
+      mode: "0644"

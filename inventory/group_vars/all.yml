@@ -1,0 +1,4 @@
+files_dir: "{{playbook_dir}}/files"
+
+network:
+  domain: monolith.wrouesnel.com

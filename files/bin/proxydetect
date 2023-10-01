@@ -1,0 +1,14 @@
+#!/bin/bash
+# Script to check if squid is running locally
+
+source /etc/default/localnetwork
+
+if /bin/nc -w 1 -z "${DOMAIN}" 3128; then
+	proxy="http://${DOMAIN}:3128"
+	echo "$proxy"
+	echo "Local Proxy is Up: $proxy" 1>&2
+else
+	echo "No Proxy Found" 1>&2
+	echo DIRECT
+fi
+exit 0

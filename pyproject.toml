@@ -10,6 +10,7 @@ packages = [{include = "ansible_personalpc"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 ansible = "^8.4.0"
+requests = "^2.31.0"
 
 
 [build-system]
@@ -18,7 +19,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ['py310']
 include = '\.pyi?$'
 exclude = '''
 (
@@ -45,7 +46,7 @@ exclude = '''
 [tool.isort]
 profile = "black"
 filter_files = true
-py_version = 39
+py_version = 310
 skip_gitignore = true
 skip_glob = [ "*.ipynb" ]
 
@@ -73,7 +74,7 @@ exclude = '''
 '''
 
 mypy_path = "stubs"
-python_version = "3.9"
+python_version = "3.10"
 
 namespace_packages = true
 

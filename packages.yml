@@ -1,0 +1,99 @@
+---
+# Basic system packages. This produces a functional command line, it would be applicable everywhere.
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - package:
+      name:
+      - ca-certificates
+      - ca-certificates-java
+      - dnsutils
+      - net-tools
+      - xmlstarlet
+      - tcpdump
+      - build-essential
+      - connect-proxy
+      - corkscrew
+      - ssh
+      - git
+      - nano
+      - openssl
+      - parted
+      - pv
+      - pwgen
+      - gpg2
+      - socat
+      - tcpdump
+      - tsocks
+      - util-linux
+      - xxd
+      - gzip
+      - xz-utils
+      - 
+      state: latest
+
+# Desktop packages. This produces a functional desktop and would be applicable everywhere.
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - package:
+      name:
+      - cinnamon-session
+      - nemo
+      - nemo-compare
+      - nemo-gtkhash
+      - nemo-fileroller
+      - nemo-python
+      - nemo-share
+      - nemo-mediainfo-tab
+      - dconf-cli
+      - dconf-editor
+      - libreoffice
+      - gimp
+      - audacity
+      - default-jdk
+      - lnav
+      - cloud-guest-utils
+      - gparted
+      - graphviz
+      - dhcping
+      - htop
+      - iotop
+      - opensnitch
+      - ovmf
+      - p11-kit
+      - p11-kit-modules
+      - qemu-system
+      - qemu-user
+      - qemu-utils
+      - rclone
+      - ssh-askpass-gnome
+      - sysstat
+      - wireshark
+      - v4l-utils
+      - xclip
+      - xsel
+      - xdot
+
+      state: latest
+
+# Personalization packages - the applications I use.
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - package:
+      name:
+      - calibre
+      - blender
+      - dosbox
+      - imagemagick
+      - openshot
+      - samba
+      - shotwell
+      - shutter
+      - xournal
+      - zeal
+      state: latest
