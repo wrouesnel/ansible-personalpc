@@ -2,4 +2,6 @@
 # Pull local settings into the repository for normalization.
 - hosts: localhost
   connection: local
-  tasks: []
+  tasks:
+  - name: Collect dconf configuration
+    shell: dconf dump / > {{files_dir}}/dconf.settings

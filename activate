@@ -4,7 +4,7 @@
 
 source include.sh
 
-if [ -d "${venv_dir}" ]; then
+if [ ! -d "${venv_dir}" ]; then
     fatal 1 "${venv_dir} does not exist. Please run ./autogen.sh"
 fi
 

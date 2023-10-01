@@ -3,3 +3,8 @@
 - hosts: localhost
   connection: local
   tasks: []
+
+- import_playbook: config.yml
+- import_playbook: apt.yml
+
+- import_playbook: packages.yml
