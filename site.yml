@@ -8,3 +8,11 @@
 - import_playbook: apt.yml
 
 - import_playbook: packages.yml
+- import_playbook: firefox.yml
+- import_playbook: syncthing.yml
+- import_playbook: vscode.yml
+
+- import_playbook: jetbrains.yml
+
+# TODO: figure out how to pull the desktop config
+# TODO: auto-setup Firefox profiles

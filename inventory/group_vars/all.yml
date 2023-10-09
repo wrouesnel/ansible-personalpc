@@ -1,4 +1,11 @@
 files_dir: "{{playbook_dir}}/files"
 
+home_dir: "{{ lookup('env', 'HOME') }}"
+
+user_dirs:
+  opt: "{{ home_dir }}/opt"
+  downloads: "{{ home_dir }}/Downloads"
+
 network:
   domain: monolith.wrouesnel.com
+  vm_network: 192.168.122.1/24

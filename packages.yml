@@ -6,6 +6,7 @@
   tasks:
   - package:
       name:
+      - apt-transport-https
       - ca-certificates
       - ca-certificates-java
       - dnsutils
@@ -30,7 +31,7 @@
       - xxd
       - gzip
       - xz-utils
-      - 
+      - libnss3-tools
       state: latest
 
 # Desktop packages. This produces a functional desktop and would be applicable everywhere.
@@ -65,9 +66,6 @@
       - ovmf
       - p11-kit
       - p11-kit-modules
-      - qemu-system
-      - qemu-user
-      - qemu-utils
       - rclone
       - ssh-askpass-gnome
       - sysstat
