@@ -1,0 +1,13 @@
+- hosts: localhost
+  connection: local
+  tasks:
+  - include_tasks: jetbrains-install.yml
+    vars:
+      product_name: "{{ item }}"
+    loop:
+    - goland
+    - clion
+    - webstorm
+    - intellij idea ultimate
+    - pycharm professional edition
+    - rider

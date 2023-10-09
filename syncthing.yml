@@ -1,0 +1,37 @@
+# Setup syncthing
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    syncthing_keyring_location: /etc/apt/keyrings/syncthing-archive-keyring.gpg
+  tasks:
+  - name: Get the keyring
+    get_url:
+      url: https://syncthing.net/release-key.gpg
+      dest: "{{syncthing_keyring_location}}"
+      mode: "0644"
+  
+  - name: Ensure syncthing sources file
+    copy:
+      dest: /etc/apt/sources.list.d/syncthing.list
+      content: |
+        deb [signed-by={{syncthing_keyring_location}}] https://apt.syncthing.net/ syncthing stable
+    
+  - name: Pin syncthing distribution package
+    copy:
+      content: |
+        Package: *
+        Pin: origin apt.syncthing.net
+        Pin-Priority: 990
+      dest: /etc/apt/preferences.d/syncthing
+      owner: root
+      group: root
+      mode: "644"
+  
+  - name: Install syncthing
+    apt:
+      name:
+      - syncthing
+      - syncthing-gtk
+      update_cache: true
+      state: latest

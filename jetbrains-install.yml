@@ -1,0 +1,72 @@
+- name: Invariants
+  set_fact:
+    jetbrains_default_build_number: !unsafe {"buildNumber": 0}
+
+- name: Get Jetbrains products
+  set_fact:
+    jetbrains_products: "{{ query('jetbrains_product')[0] }}"
+    local_name: "{{ product_name|replace(' ', '-') }}"
+
+- name: Check for package already installed
+  stat:
+    path: "{{ user_dirs.opt }}/{{local_name}}"
+  register: jetbrains_product_dir
+
+- name: Determine paths
+  set_fact:
+    install_path: "{{ user_dirs.downloads }}/{{latest_downloadname}}"
+
+- name: Check installed version
+  slurp:
+    path: "{{ install_path }}"
+  register: product_info
+  when: product_dir.stat.exists
+
+- name: Check versions
+  set_fact:
+    current_version: "{{ (product_info.content|default(jetbrains_default_build_number|b64encode) | b64decode | from_json).buildNumber }}"
+    latest_version: "{{ (jetbrains_products.by_name[product_name].releases|first).build }}"
+    latest_url: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.link }}"
+    latest_downloadname: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.link|split('/')|last }}"
+
+- name: Install product
+  block:
+  - get_url:
+      url: "{{ latest_url }}"
+      dest: "{{ install_path }}"
+  - file:
+      path: "{{ install_path }}"
+      state: absent
+  - file:
+      path: "{{ install_path }}"
+      state: directory
+  - unarchive:
+      src: "{{ user_dirs.downloads }}/{{latest_downloadname}}"
+      dest: "{{ install_path }}"
+      extra_opts:
+      - --strip-components=1
+  when: current_version != latest_version
+
+- name: Get install product data
+  slurp:
+    path: "{{ install_path }}"
+  register: product_info
+  when: product_dir.stat.exists
+
+- name: Unpack product data
+  set_fact:
+    jetbrains_product_info: "{{ jetbrains_products.by_name[product_name] }}"
+    current_product_info: "{{ product_info.content|default(jetbrains_default_build_number|b64encode) | b64decode | from_json }}"
+
+- name: Calculate launcher data
+  set_fact:
+    desktop_name: "{{ current_product_info.name }}"
+    desktop_icon: "{{ install_path }}/{{ current_product_info.svgIconPath }}"
+    desktop_exec: "{{ install_path }}/{{ (current_product_info.launch|first).launcherPath }}"
+    desktop_comment: "{{ jetbrains_product_info.description }}"
+    desktop_startup_wm_class: "{{ (current_product_info.launch|first).startupWmClass }}"
+
+- name: Template the launcher
+  template:
+    src: templates/home/.local/share/applications/jetbrains.desktop
+    dest: "{{ home_dir }}/.local/share/applications/{{ desktop_startup_wm_class }}.desktop"

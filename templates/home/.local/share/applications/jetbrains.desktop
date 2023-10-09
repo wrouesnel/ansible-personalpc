@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name={{ desktop_name }}
+Icon={{ desktop_icon }}
+Exec={{ desktop_exec }}
+Comment={{ desktop_comment }}
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass={{ desktop_startup_wm_class }}

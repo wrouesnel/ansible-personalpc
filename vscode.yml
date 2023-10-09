@@ -1,0 +1,31 @@
+# Setup VS Code
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    vscode_keyring_location: /etc/apt/keyrings/packages.microsoft.asc
+  tasks:
+  - name: Get the keyring
+    get_url:
+      url: https://packages.microsoft.com/keys/packages.microsoft.asc
+      dest: "{{vscode_keyring_location}}"
+      mode: "0644"
+  
+  - name: Ensure syncthing sources file
+    copy:
+      dest: /etc/apt/sources.list.d/vscode.list
+      content: |
+        deb [arch=amd64,arm64,armhf signed-by={{vscode_keyring_location}}] https://packages.microsoft.com/repos/code stable main
+  
+  - name: Install VS Code
+    apt:
+      name:
+      - code
+      update_cache: true
+      state: latest
+  
+  - name: Make VS Code the default text editor
+    shell: update-alternatives --set editor /usr/bin/code
+
+  - name:
+    shell: xdg-mime default code.desktop text/plain

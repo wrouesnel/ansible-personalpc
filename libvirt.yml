@@ -1,0 +1,59 @@
+---
+# Configure libvirt
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: install
+    package:
+      name:
+      - qemu-system
+      - qemu-user
+      - qemu-utils
+      - libvirt-bin
+      - libvirt-clients
+      - virt-manager
+      - virt-viewer
+      state: latest
+
+  - name: configure the libvirt network
+    virt_net:
+      command: edit
+      name: default
+      xml: |
+        <network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
+          <name>default</name>
+          <forward mode='nat'/>
+          <bridge name='virbr0' stp='on' delay='0'/>
+          <mac address='{{ "52:54:00" | random_mac }}'/>
+          <domain name='default.libvirt' localOnly='yes'/>
+          <ip address='{{ network.vm_network | ipaddr("address") }}' netmask='{{ network.vm_network | ipaddr("netmask") }}'>
+            <dhcp>
+              <range start='{{ network.vm_network | ipaddr("next_usable")) }}' end='{{ network.vm_network | ipaddr("last_usable") }}'/>
+            </dhcp>
+          </ip>
+        </network>
+
+  - name: setup libvirt redirect
+    copy:
+      dest: /etc/systemd/resolved.conf.d/libvirt-redirect.conf
+      content: |
+        [Resolve]
+        DNS={{ network.vm_network | ipaddr("address") }}
+        Domains=~default.libvirt
+      owner: root
+      group: root
+      mode: "0644"
+
+  # TODO: apt settings to persist the bridge helper
+  - name: setup bridge helper
+    copy:
+      dest: /etc/qemu/bridge.conf
+      content: |
+        allow virbr0
+      owner: root
+      group: root
+      mode: "0644"
+
+  - name: ensure bridge helper is setuid
+    shell: chmod u+s /usr/lib/qemu/qemu-bridge-helper

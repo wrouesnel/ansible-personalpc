@@ -1,0 +1,40 @@
+---
+# Deploy firefox
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Add Firefox PPA
+    apt_repository:
+      repo: "ppa:mozillateam/ppa"
+      state: present
+  
+  - name: Pin Firefox
+    copy:
+      content: |
+        Package: *
+        Pin: release o=LP-PPA-mozillateam
+        Pin-Priority: 1001
+      dest: /etc/apt/preferences.d/mozilla-firefox
+      owner: root
+      group: root
+      mode: "644"
+  
+  - name: Install Firefox
+    apt:
+      name: 
+      - firefox
+      update_cache: true
+      allow_downgrade: true
+      state: latest
+
+  - name: Remove Firefox snap
+    snap:
+      name: 
+      - firefox
+      state: absent
+
+  # Don't link Firefox to libnssckbi
+  # - name: Link firefox to p11-kit
+  #   file:
+  #     path: /usr/lib/firefox/libnssckbi.so
