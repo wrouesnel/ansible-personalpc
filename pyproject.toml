@@ -11,6 +11,7 @@ packages = [{include = "ansible_personalpc"}]
 python = "^3.10"
 ansible = "^8.4.0"
 requests = "^2.31.0"
+jmespath = "^1.0.1"
 
 
 [build-system]

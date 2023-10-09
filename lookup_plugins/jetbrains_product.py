@@ -30,7 +30,7 @@ DOCUMENTATION = """
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
-        names = terms[0]
+        #names = terms[0]
 
         response = requests.get("https://data.services.jetbrains.com/products")
         data = response.json()

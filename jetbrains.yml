@@ -1,6 +1,10 @@
 - hosts: localhost
   connection: local
   tasks:
+  - name: Get Jetbrains products
+    set_fact:
+      jetbrains_products: "{{ query('jetbrains_product')[0] }}"
+  
   - include_tasks: jetbrains-install.yml
     vars:
       product_name: "{{ item }}"
