@@ -2,38 +2,48 @@
   set_fact:
     jetbrains_default_build_number: !unsafe {"buildNumber": 0}
 
+- name: Invariants
+  set_fact:
+    #jetbrains_default_build_number_b64: "{{jetbrains_default_build_number|b64encode}}"
+    jetbrains_default_build_number_b64: eyJidWlsZE51bWJlciI6IDB9
+
 - name: Get Jetbrains products
   set_fact:
-    jetbrains_products: "{{ query('jetbrains_product')[0] }}"
     local_name: "{{ product_name|replace(' ', '-') }}"
+
+- name: Set install path
+  set_fact:
+    install_path: "{{ user_dirs.opt }}/{{local_name}}"
 
 - name: Check for package already installed
   stat:
-    path: "{{ user_dirs.opt }}/{{local_name}}"
-  register: jetbrains_product_dir
-
-- name: Determine paths
-  set_fact:
-    install_path: "{{ user_dirs.downloads }}/{{latest_downloadname}}"
-
-- name: Check installed version
-  slurp:
     path: "{{ install_path }}"
+  register: product_dir
+
+- name: Get install product data
+  slurp:
+    path: "{{ install_path }}/product-info.json"
   register: product_info
   when: product_dir.stat.exists
 
-- name: Check versions
+- name: Determine versions
   set_fact:
-    current_version: "{{ (product_info.content|default(jetbrains_default_build_number|b64encode) | b64decode | from_json).buildNumber }}"
+    current_version: "{{ (product_info.content|default(jetbrains_default_build_number_b64) | b64decode | from_json).buildNumber }}"
     latest_version: "{{ (jetbrains_products.by_name[product_name].releases|first).build }}"
     latest_url: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.link }}"
+    latest_checksum_url: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.checksumLink }}"
     latest_downloadname: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.link|split('/')|last }}"
+
+- name: Determine paths
+  set_fact:
+    download_path: "{{ user_dirs.downloads }}/{{latest_downloadname}}"
 
 - name: Install product
   block:
   - get_url:
       url: "{{ latest_url }}"
-      dest: "{{ install_path }}"
+      dest: "{{ download_path }}"
+      checksum: sha256:{{latest_checksum_url}}
   - file:
       path: "{{ install_path }}"
       state: absent
@@ -41,7 +51,7 @@
       path: "{{ install_path }}"
       state: directory
   - unarchive:
-      src: "{{ user_dirs.downloads }}/{{latest_downloadname}}"
+      src: "{{ download_path }}"
       dest: "{{ install_path }}"
       extra_opts:
       - --strip-components=1
@@ -49,9 +59,8 @@
 
 - name: Get install product data
   slurp:
-    path: "{{ install_path }}"
+    path: "{{ install_path }}/product-info.json"
   register: product_info
-  when: product_dir.stat.exists
 
 - name: Unpack product data
   set_fact:
@@ -62,7 +71,7 @@
   set_fact:
     desktop_name: "{{ current_product_info.name }}"
     desktop_icon: "{{ install_path }}/{{ current_product_info.svgIconPath }}"
-    desktop_exec: "{{ install_path }}/{{ (current_product_info.launch|first).launcherPath }}"
+    desktop_exec: "{{ install_path }}/{{ (current_product_info | json_query('launch[?os == `Linux`]') | first).launcherPath }}"
     desktop_comment: "{{ jetbrains_product_info.description }}"
     desktop_startup_wm_class: "{{ (current_product_info.launch|first).startupWmClass }}"
 
