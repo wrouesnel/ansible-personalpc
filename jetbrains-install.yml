@@ -26,13 +26,17 @@
   register: product_info
   when: product_dir.stat.exists
 
+- name: Latest version metadata
+  set_fact:
+    latest_release: "{{jetbrains_products.by_name[product_name].releases|json_query('[?type==`release`]')|first}}"
+
 - name: Determine versions
   set_fact:
     current_version: "{{ (product_info.content|default(jetbrains_default_build_number_b64) | b64decode | from_json).buildNumber }}"
-    latest_version: "{{ (jetbrains_products.by_name[product_name].releases|first).build }}"
-    latest_url: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.link }}"
-    latest_checksum_url: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.checksumLink }}"
-    latest_downloadname: "{{ (jetbrains_products.by_name[product_name].releases|first).downloads.linux.link|split('/')|last }}"
+    latest_version: "{{ latest_release.build }}"
+    latest_url: "{{ latest_release.downloads.linux.link }}"
+    latest_checksum_url: "{{ latest_release.downloads.linux.checksumLink }}"
+    latest_downloadname: "{{ latest_release.downloads.linux.link|split('/')|last }}"
 
 - name: Determine paths
   set_fact:
