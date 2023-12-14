@@ -75,6 +75,7 @@
       - xclip
       - xsel
       - xdot
+      - git-gui
 
       state: latest
 
@@ -95,4 +96,12 @@
       - shutter
       - xournal
       - zeal
+      # Serial comm package
+      - tio
+      - kicad
+      - kicad-templates
+      - kicad-libraries
+      - kicad-footprints
+      - kicad-symbols
+      - kicad-packages3d
       state: latest
