@@ -32,6 +32,7 @@
       - gzip
       - xz-utils
       - libnss3-tools
+      - etherwake
       state: latest
 
 # Desktop packages. This produces a functional desktop and would be applicable everywhere.

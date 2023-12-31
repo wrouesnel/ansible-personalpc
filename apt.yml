@@ -2,18 +2,20 @@
 # Configure apt proxy settings
 - hosts: localhost
   connection: local
+  become: true
   tasks:
   - name: Deploy the proxydetect script
     copy:
-      src: files/bin/proydetect
+      src: files/bin/proxydetect
       dest: /usr/local/bin/proxydetect
       mode: "0755"
       owner: root
       group: root
+    register: proxydetect_script
 
   - name: Deploy the autoproxy config
     template:
-      src: apt/apt.conf.d/30autoproxy.j2
+      src: files/etc/apt/apt.conf.d/30autoproxy.j2
       dest: /etc/apt/apt.conf.2/30autoproxy
       owner: root
       group: root

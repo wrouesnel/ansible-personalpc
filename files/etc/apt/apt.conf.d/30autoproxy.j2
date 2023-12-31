@@ -1,0 +1,2 @@
+#/etc/apt/apt.conf.d/30autoproxy 
+Acquire::http::ProxyAutoDetect "{{ proxydetect_script.dest }}";
