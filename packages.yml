@@ -105,4 +105,6 @@
       - kicad-symbols
       - kicad-packages3d
       - sigrok
+      - netperf
+      - flent
       state: latest
