@@ -14,6 +14,7 @@
       - libvirt-clients
       - virt-manager
       - virt-viewer
+      - ksmtuned
       state: latest
 
   - name: configure the libvirt network
