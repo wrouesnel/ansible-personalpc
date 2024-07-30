@@ -10,6 +10,7 @@
       - qemu-system
       - qemu-user
       - qemu-utils
+      - qemu-system-gui  # Needed for GL passthrough to work
       - libvirt-bin
       - libvirt-clients
       - virt-manager
