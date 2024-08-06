@@ -6,6 +6,8 @@ user_dirs:
   opt: "{{ home_dir }}/opt"
   downloads: "{{ home_dir }}/Downloads"
 
+apt_keyring_dir: /etc/apt/keyrings
+
 network:
   domain: monolith.wrouesnel.com
   vm_network: 192.168.122.1/24
