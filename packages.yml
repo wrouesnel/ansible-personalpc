@@ -131,6 +131,9 @@
   tasks:
   - package:
       name:
+      - python3
+      - python3-venv
       - cmake
       - ninja
+      - libopenmpi-dev
       state: latest
