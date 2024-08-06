@@ -9,7 +9,7 @@ packages = [{include = "ansible_personalpc"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ansible = "^8.4.0"
+ansible = "^10.2.0"
 requests = "^2.31.0"
 jmespath = "^1.0.1"
 
