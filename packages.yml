@@ -123,3 +123,14 @@
       - netperf
       - flent
       state: latest
+
+# Build Packages - things I've added
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - package:
+      name:
+      - cmake
+      - ninja
+      state: latest
