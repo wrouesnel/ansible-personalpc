@@ -35,6 +35,21 @@
       - etherwake
       state: latest
 
+# Boot packages
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - package:
+      name:
+      - clevis
+      - clevis-initramfs
+      - clevis-luks
+      - clevis-systemd
+      - clevis-tpm
+      - clevis-udisks2
+      state: latest
+
 # Desktop packages. This produces a functional desktop and would be applicable everywhere.
 - hosts: localhost
   connection: local

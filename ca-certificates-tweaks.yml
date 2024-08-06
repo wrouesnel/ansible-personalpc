@@ -1,0 +1,24 @@
+---
+# Fix CA certificates
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Remove certificates we don't like
+    lineinfile:
+      path: /etc/ca-certificates.conf
+      regexp: ^(mozilla/{{item}})
+      line: '!\1'
+      backrefs: true
+    loop:
+    # BEIJING CERTIFICATE AUTHORITY (China)
+    - BJCA_Global_Root_CA1.crt
+    - BJCA_Global_Root_CA2.crt
+    # TrustAsia Technologies, Inc. (China)
+    - TrustAsia_Global_Root_CA_G3.crt
+    - TrustAsia_Global_Root_CA_G4.crt
+    register: result
+  
+  - name: Update CA certificates when changed
+    command: update-ca-certificates
+    when: result.changed
