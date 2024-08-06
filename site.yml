@@ -14,5 +14,7 @@
 
 - import_playbook: jetbrains.yml
 
+- import_playbook: ca-certificates-tweaks.yml
+
 # TODO: figure out how to pull the desktop config
 # TODO: auto-setup Firefox profiles
