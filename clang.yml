@@ -20,55 +20,57 @@
     package:
       name:
         # LLVM
-      - libllvm-18-ocaml-dev
-      - libllvm18
-      - llvm-18
-      - llvm-18-dev
-      - llvm-18-doc
-      - llvm-18-examples
-      - llvm-18-runtime
+      - libllvm-{{item}}-ocaml-dev
+      - libllvm{{item}}
+      - llvm-{{item}}
+      - llvm-{{item}}-dev
+      - llvm-{{item}}-doc
+      - llvm-{{item}}-examples
+      - llvm-{{item}}-runtime
       # Clang and co
-      - clang-18
-      - clang-tools-18
-      - clang-18-doc
-      - libclang-common-18-dev
-      - libclang-18-dev
-      - libclang1-18
-      - clang-format-18
-      - python3-clang-18
-      - clangd-18
-      - clang-tidy-18
+      - clang-{{item}}
+      - clang-tools-{{item}}
+      - clang-{{item}}-doc
+      - libclang-common-{{item}}-dev
+      - libclang-{{item}}-dev
+      - libclang1-{{item}}
+      - clang-format-{{item}}
+      - python3-clang-{{item}}
+      - clangd-{{item}}
+      - clang-tidy-{{item}}
       # compiler-rt
-      - libclang-rt-18-dev
+      - libclang-rt-{{item}}-dev
       # polly
-      - libpolly-18-dev
+      - libpolly-{{item}}-dev
       # libfuzzer
-      - libfuzzer-18-dev
+      - libfuzzer-{{item}}-dev
       # lldb
-      - lldb-18
+      - lldb-{{item}}
       # lld (linker)
-      - lld-18
+      - lld-{{item}}
       # libc++
-      - libc++-18-dev
-      - libc++abi-18-dev
+      - libc++-{{item}}-dev
+      - libc++abi-{{item}}-dev
       # OpenMP
-      - libomp-18-dev
+      - libomp-{{item}}-dev
       # libclc
-      - libclc-18-dev
+      - libclc-{{item}}-dev
       # libunwind
-      - libunwind-18-dev
+      - libunwind-{{item}}-dev
       # mlir
-      - libmlir-18-dev
-      - mlir-18-tools
+      - libmlir-{{item}}-dev
+      - mlir-{{item}}-tools
       # bolt
-      - libbolt-18-dev
-      - bolt-18
+      - libbolt-{{item}}-dev
+      - bolt-{{item}}
       # flang
-      - flang-18
+      - flang-{{item}}
       # wasm support
-      - libclang-rt-18-dev-wasm32
-      - libclang-rt-18-dev-wasm64
-      - libc++-18-dev-wasm32
-      - libc++abi-18-dev-wasm32
-      - libclang-rt-18-dev-wasm32
-      - libclang-rt-18-dev-wasm64
+      - libclang-rt-{{item}}-dev-wasm32
+      - libclang-rt-{{item}}-dev-wasm64
+      - libc++-{{item}}-dev-wasm32
+      - libc++abi-{{item}}-dev-wasm32
+      - libclang-rt-{{item}}-dev-wasm32
+      - libclang-rt-{{item}}-dev-wasm64
+    loop:
+    - 18

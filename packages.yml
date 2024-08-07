@@ -136,4 +136,5 @@
       - cmake
       - ninja
       - libopenmpi-dev
+      - libstdc++-14-dev
       state: latest
