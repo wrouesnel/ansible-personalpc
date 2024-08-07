@@ -1,0 +1,46 @@
+# Podman Customizations
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Ensure directory
+    file:
+      path: /etc/systemd/user/
+      owner: root
+      group: root
+      mode: "0755"
+      state: directory
+
+  - name: Add the docker-podman-proxy.service
+    copy:
+      content: |
+        [Unit]
+        Requires=podman.socket
+        After=podman.socket
+        Requires=docker-podman-proxy.socket
+        After=docker-podman-proxy.socket
+
+        [Service]
+        Type=notify
+        ExecStart=/usr/lib/systemd/systemd-socket-proxyd %t/podman/podman.sock
+      dest: /etc/systemd/user/docker-podman-proxy.service
+      owner: root
+      group: root
+      mode: "0644"
+
+  - name: Add the docker-podman-proxy.socket
+    copy:
+      content: |
+        [Unit]
+        Description=Docker API Proxy to Podman
+
+        [Socket]
+        ListenStream=%t/docker.sock
+
+        [Install]
+        WantedBy=sockets.target
+
+      dest: /etc/systemd/user/docker-podman-proxy.socket
+      owner: root
+      group: root
+      mode: "0644"

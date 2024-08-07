@@ -57,7 +57,12 @@
   tasks:
   - package:
       name:
-      - cinnamon-session
+      - cinnamon-core
+      # These are needed for electron apps to have working try icons
+      - xdg-desktop-portal-xapp
+      - xapp-gtk3-module
+      - xapp-sn-watcher 
+      - gdm3
       - nemo
       - nemo-compare
       - nemo-gtkhash
@@ -89,6 +94,7 @@
       - v4l-utils
       - xclip
       - xsel
+      - xdotool
       - xdot
       - git-gui
 
