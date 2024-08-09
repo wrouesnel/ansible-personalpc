@@ -16,7 +16,7 @@
   - name: Deploy the autoproxy config
     template:
       src: files/etc/apt/apt.conf.d/30autoproxy.j2
-      dest: /etc/apt/apt.conf.2/30autoproxy
+      dest: /etc/apt/apt.conf.d/30autoproxy
       owner: root
       group: root
       mode: "0644"
