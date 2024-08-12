@@ -1,0 +1,15 @@
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    pyenv_root: "{{ (home_dir, '.pyenv') | path_join }}"
+  tasks:
+  - name: Install pyenv
+    ansible.builtin.git:
+      repo: 'https://github.com/pyenv/pyenv'
+      dest: "{{ pyenv_root }}"  
+
+  - name: Install pyenv-update
+    ansible.builtin.git:
+      repo: 'https://github.com/pyenv/pyenv'
+      dest: "{{ ( pyenv_root, 'plugins', 'pyenv-update' ) | path_join }}"  
