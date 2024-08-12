@@ -10,8 +10,10 @@
 - import_playbook: packages.yml
 - import_playbook: firefox.yml
 - import_playbook: syncthing.yml
+- import_playbook: firefox.yml
 - import_playbook: vscode.yml
 - import_playbook: podman.yml
+- import_playbook: pyenv.yml
 
 - import_playbook: jetbrains.yml
 
