@@ -5,3 +5,10 @@
   tasks:
   - name: Collect dconf configuration
     shell: dconf dump / > {{files_dir}}/dconf.settings
+
+  - name: Collect local gtk-3.0 config
+    copy:
+      src: >
+        {{ [ home_dir, ".config", "gtk-3.0", "gtk.css" ] | path_join }}
+      dest: >
+        {{ files_dir, "home", ".config", "gtk-3.0", "gtk.css" | path_join }}

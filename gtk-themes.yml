@@ -1,0 +1,7 @@
+# Deploy/update a personal computer system.
+- hosts: localhost
+  connection: local
+  tasks:
+  - name: GTK3 theme customizations
+    copy:
+      src: home/.config/gtk-3/gtk.css
