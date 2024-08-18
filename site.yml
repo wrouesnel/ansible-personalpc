@@ -23,5 +23,5 @@
 
 # TODO: figure out how to pull the desktop config
 # TODO: auto-setup Firefox profiles
-
+- import_playbook: gtk-themes.yml
 - import_playbook: dconf-restore.yml
