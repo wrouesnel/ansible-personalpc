@@ -11,6 +11,8 @@
       - qemu-user
       - qemu-utils
       - qemu-system-gui  # Needed for GL passthrough to work
+      - qemu-system-modules-spice
+      - qemu-system-modules-opengl
       - libvirt-bin
       - libvirt-clients
       - virt-manager
