@@ -44,3 +44,27 @@
       owner: root
       group: root
       mode: "0644"
+
+  - name: Setup common registry mirrors
+    copy:
+      dest: /etc/containers/registries.conf.d/mirrors.conf
+      content: |
+        # ANSIBLE MANAGED
+        {% for item in registries %}
+        [[registry]]
+        location = "{{item}}"
+        [[registry.mirror]]
+        location = "registry-mirror.{{network.domain}}/{{item}}"
+        {% endfor %}
+      owner: root
+      group: root
+      mode: "0644"
+    vars:
+      registries:
+      - docker.io
+      - gcr.io
+      - ghcr.io
+      - quay.io
+      - registry.opensuse.org
+      - registry.suse.org
+      - registry.access.redhat.com
