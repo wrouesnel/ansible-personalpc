@@ -4,7 +4,8 @@
   connection: local
   become: true
   tasks:
-  - package:
+  - name: Core packages
+    package:
       name:
       - apt-transport-https
       - ca-certificates
@@ -23,7 +24,7 @@
       - parted
       - pv
       - pwgen
-      - gpg2
+      - gpg
       - socat
       - tcpdump
       - tsocks
@@ -40,13 +41,14 @@
   connection: local
   become: true
   tasks:
-  - package:
+  - name: Boot packages
+    package:
       name:
       - clevis
       - clevis-initramfs
       - clevis-luks
       - clevis-systemd
-      - clevis-tpm
+      - clevis-tpm2
       - clevis-udisks2
       state: latest
 
@@ -55,12 +57,13 @@
   connection: local
   become: true
   tasks:
-  - package:
+  - name: Desktop packages
+    package:
       name:
       - cinnamon-core
       # These are needed for electron apps to have working try icons
       - xdg-desktop-portal-xapp
-      - xapp-gtk3-module
+      #- xapp-gtk3-module
       - xapp-sn-watcher 
       - gdm3
       - nemo
@@ -68,8 +71,8 @@
       - nemo-gtkhash
       - nemo-fileroller
       - nemo-python
-      - nemo-share
-      - nemo-mediainfo-tab
+      #- nemo-share
+      #- nemo-mediainfo-tab
       - dconf-cli
       - dconf-editor
       - libreoffice
@@ -105,13 +108,14 @@
   connection: local
   become: true
   tasks:
-  - package:
+  - name: Personalization packages
+    package:
       name:
       - calibre
       - blender
       - dosbox
       - imagemagick
-      - openshot
+      - openshot-qt
       - samba
       - shotwell
       - shutter
@@ -135,12 +139,13 @@
   connection: local
   become: true
   tasks:
-  - package:
+  - name: Build Packages
+    package:
       name:
       - python3
       - python3-venv
       - cmake
-      - ninja
+      #- ninja
       - libopenmpi-dev
       - libstdc++-14-dev
       state: latest

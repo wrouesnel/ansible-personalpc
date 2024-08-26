@@ -7,7 +7,7 @@
   tasks:
   - name: Get the keyring
     get_url:
-      url: https://packages.microsoft.com/keys/packages.microsoft.asc
+      url: https://packages.microsoft.com/keys/microsoft.asc
       dest: "{{vscode_keyring_location}}"
       mode: "0644"
   
