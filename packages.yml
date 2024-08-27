@@ -132,6 +132,7 @@
       - sigrok
       - netperf
       - flent
+      - wireshark
       state: latest
 
 # Build Packages - things I've added
