@@ -149,4 +149,5 @@
       #- ninja
       - libopenmpi-dev
       - libstdc++-14-dev
+      - clang
       state: latest
