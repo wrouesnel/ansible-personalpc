@@ -16,6 +16,7 @@
 - import_playbook: pyenv.yml
 
 - import_playbook: jetbrains.yml
+- import_playbook: freecad.yml
 
 - import_playbook: clang.yml
 
