@@ -15,6 +15,7 @@
 - import_playbook: podman.yml
 - import_playbook: pyenv.yml
 
+- import_playbook: golang.yml
 - import_playbook: jetbrains.yml
 - import_playbook: freecad.yml
 
