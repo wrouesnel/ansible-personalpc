@@ -78,3 +78,22 @@
       - registry.opensuse.org
       - registry.suse.org
       - registry.access.redhat.com
+  
+  - name: Configure default settings
+    stat:
+      path: /etc/containers/containers.conf
+    register: podman_containers_conf
+
+  - name: Configure containers.conf file
+    copy:
+      dest: /etc/containers/containers.conf
+      src: /usr/share/containers/containers.conf
+      remote_src: true
+    when: podman_containers_conf.stat.exists == false
+  
+  - name: Set network backend to aardvark
+    lineinfile:
+      path: /etc/containers/containers.conf
+      line: network_backend = "netavark"
+      regexp: '#?network_backend'
+      insertafter: '\[network\]'
