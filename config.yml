@@ -11,3 +11,9 @@
       owner: root
       group: root
       mode: "0644"
+  - name: Set inotify user watches
+    sysctl: 
+      name: fs.inotify.max_user_watches
+      value: '2097152'
+      state: present
+  
