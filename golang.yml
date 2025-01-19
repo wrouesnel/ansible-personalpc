@@ -1,0 +1,85 @@
+# Manages keeping Golang up to date
+- hosts: localhost
+  connection: local
+  vars:
+    golang_install_path: "{{ [user_dirs.opt, 'go'] | path_join }}"
+  tasks:
+  - name: Get the current Golang versions
+    uri:
+      url: https://go.dev/dl/?mode=json
+      return_content: true
+    register: remote_golang_versions
+
+  - name: Get the latest version
+    set_fact:
+      remote_latest_golang_version: >-
+        {%- set versions = remote_golang_versions.json|first -%}
+        {{ versions }}
+
+  - name: Build the files list
+    set_fact:
+      remote_golang_files_by_arch: >-
+        {%- set files = {} -%}
+        {%- for meta in remote_latest_golang_version.files -%}
+          {%- if meta.kind == "archive" and meta.os == ansible_system|lower -%}
+            {%- do files.update({ meta.arch : meta }) -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ files }}
+
+  - name: Does old version exist?
+    stat:
+      path: "{{ [user_dirs.opt, 'go', 'VERSION' ] | path_join }}"
+    register: local_golang_local_version_file_st
+
+  - name: Get the local version
+    slurp:
+      src: "{{ [user_dirs.opt, 'go', 'VERSION' ] | path_join }}"
+    register: local_golang_version_file
+
+  - name: Get the current version
+    set_fact:
+      local_golang_version: >-
+        {%- set version = (local_golang_version_file['content'] | b64decode).split("\n")[0] -%}
+        {{version}}
+    when: local_golang_local_version_file_st.stat.exists
+
+  - name: Get the current version
+    set_fact:
+      local_golang_version: "not-installed"
+    when: not local_golang_local_version_file_st.stat.exists
+
+  - name: Convert Golang arch
+    set_fact:
+      golang_arch: >-
+        {%- set arch = ansible_architecture -%}
+        {%- if arch == "x86_64" -%}
+          {%- set arch = "amd64" -%}
+        {%- endif -%}
+        {{ arch }}
+
+  - name: Is upgrade required?
+    set_fact:
+      golang_upgrade_required: "{{ local_golang_version != remote_latest_golang_version.version }}"
+      golang_download_url: "https://go.dev/dl/{{remote_golang_files_by_arch[golang_arch].filename}}"
+      golang_download_path: "{{ [ user_dirs.downloads, remote_golang_files_by_arch[golang_arch].filename ] | path_join }}"
+      golang_download_sha256: "{{ remote_golang_files_by_arch[golang_arch].sha256 }}"
+
+  - name: Download new Go version
+    get_url:
+      url: "{{ golang_download_url }}"
+      dest: "{{ golang_download_path }}"
+      checksum: sha256:{{golang_download_sha256}}
+    when: golang_upgrade_required
+
+  - name: Rename old installation
+    command: mv {{golang_install_path}} {{ [user_dirs.opt, local_golang_version] | path_join }}
+    when: local_golang_local_version_file_st.stat.exists and golang_upgrade_required
+
+
+  - name: Extract the new installation
+    unarchive:
+      src: "{{golang_download_path}}"
+      dest: "{{ user_dirs.opt }}"
+      remote_src: true
+    when: golang_upgrade_required
