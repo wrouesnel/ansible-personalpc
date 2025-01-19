@@ -45,6 +45,16 @@
       group: root
       mode: "0644"
 
+  - name: Configure unqualified search registries
+    copy:
+      dest: /etc/containers/registries.conf.d/unqualified-search-registries.conf
+      content: |
+        # ANSIBLE MANAGED
+        unqualified-search-registries = ["docker.io"]
+      owner: root
+      group: root
+      mode: "0644"
+
   - name: Setup common registry mirrors
     copy:
       dest: /etc/containers/registries.conf.d/mirrors.conf

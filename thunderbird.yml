@@ -1,0 +1,29 @@
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    th_download_path: "{{user_dirs.downloads}}/thunderbird-128.5.2esr.tar.bz2"
+  tasks:
+  - unarchive:
+      src: "{{th_download_path}}"
+      dest: /opt/
+      remote_src: true
+      creates: /opt/thunderbird/thunderbird
+
+  - file:
+      path: /usr/local/share/applications
+      state: directory
+      owner: root
+      group: root
+      mode: "0755"
+
+  - copy:
+      content: |
+        [Desktop Entry] 
+        Name=Thunderbird 
+        Exec=/opt/thunderbird/thunderbird 
+        Comment=Mail and Calendar Client
+        Terminal=false
+        Icon=/opt/thunderbird/chrome/icons/default/default256.png
+        Type=Application
+      dest: /usr/local/share/applications/thunderbird.desktop
