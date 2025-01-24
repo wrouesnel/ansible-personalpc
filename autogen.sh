@@ -14,7 +14,6 @@ cd "$SCRIPT_DIR" || fatal 1 "Failed to change to $SCRIPT_DIR"
 
 requires=(
     "git"
-    "poetry"
 )
 
 check_requirements "${requires[@]}"
