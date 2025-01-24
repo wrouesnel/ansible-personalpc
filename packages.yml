@@ -134,6 +134,8 @@
       - netperf
       - flent
       - wireshark
+      # Zeal docs
+      - zeal
       state: latest
 
 # Build Packages - things I've added
