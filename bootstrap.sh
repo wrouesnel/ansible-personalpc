@@ -24,22 +24,10 @@ if ! sudo apt update; then
 fi
 
 
-if ! sudo apt install -u curl; then
-  fatal "curl installation failed"
+if ! sudo apt install -u python3-pip; then
+  fatal "python3-pip installation failed"
 fi
 
-if [ ! -d "${HOME}/Downloads" ]; then
-  if ! mkdir "${HOME}/Downloads"; then
-    fatal "Could not create downloads directory"
-  fi
-fi
-
-get_poetry="${HOME}/Downloads/get-poetry.py"
-
-if ! curl --fail -sSL https://install.python-poetry.org > "${get_poetry}"; then
-  fatal "Downloading poetry installer failed."
-fi
-
-if ! python3 "${get_poetry}"; then
-  fatal "Failed to install poetry"
+if ! pip install uv ; then
+  fatal "Failed to install uv"
 fi

@@ -6,13 +6,13 @@ export autogen_dir=".autogen.d"
 export githooks_dir=".githooks"
 export scripts_dir=".scripts"
 
-if command -v poetry 2>&1 1>/dev/null; then
-    if ! export venv_dir="$(poetry env info --path)"; then
-        export venv_dir=".venv"
-    fi
-else
-    export venv_dir=".venv"
-fi
+# if command -v poetry 2>&1 1>/dev/null; then
+#     if ! export venv_dir="$(poetry env info --path)"; then
+#         export venv_dir=".venv"
+#     fi
+# else
+#     export venv_dir=".venv"
+# fi
 
 # Color initialization guard due to the use of read-only bash variables.
 export _colors_initialized=0

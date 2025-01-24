@@ -9,8 +9,8 @@ done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
 source "${SCRIPT_DIR}/include.sh"
-source "${SCRIPT_DIR}/activate"
+#source "${SCRIPT_DIR}/activate"
 
 cd "$SCRIPT_DIR" || fatal 1 "Failed to change to $SCRIPT_DIR"
 
-exec ansible-playbook -K -c local "$@"
+exec uv run ansible-playbook -K -c local "$@"

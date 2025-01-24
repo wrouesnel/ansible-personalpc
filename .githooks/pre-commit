@@ -51,8 +51,8 @@ if [ -e ./typecheck ]; then
 fi
 
 # Export the poetry config to requirements.txt
-if ! poetry export --format=requirements.txt > requirements.txt ; then
-    error "Could not export poetry to requiremetns.txt. Use git commit --no-verify to ignore".
+if ! uv export --format=requirements-txt > requirements.txt ; then
+    error "Could not export uv to requirements.txt. Use git commit --no-verify to ignore".
     retcode=1
 fi
 
