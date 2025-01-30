@@ -101,6 +101,7 @@
       - xdot
       - git-gui
       - system-config-printer
+      - gnome-calculator
 
       state: latest
 
