@@ -34,6 +34,8 @@
       - xz-utils
       - libnss3-tools
       - etherwake
+      - pcscd  # Smart card daemon
+      - yubico-piv-tool
       state: latest
 
 # Boot packages
