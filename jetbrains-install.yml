@@ -25,6 +25,7 @@
     path: "{{ install_path }}/product-info.json"
   register: product_info
   when: product_dir.stat.exists
+  failed_when: false
 
 - name: Latest version metadata
   set_fact:
