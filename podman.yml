@@ -3,6 +3,11 @@
   connection: local
   become: true
   tasks:
+  - name: Install podman
+    packages:
+      name:
+        - podman
+
   - name: Ensure directory
     file:
       path: /etc/systemd/user/
