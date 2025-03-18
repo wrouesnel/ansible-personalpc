@@ -35,7 +35,8 @@
       - libnss3-tools
       - etherwake
       - pcscd  # Smart card daemon
-      - yubico-piv-tool
+      - opensc
+      - jq
       state: latest
 
 # Boot packages

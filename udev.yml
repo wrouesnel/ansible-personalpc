@@ -1,0 +1,14 @@
+---
+# General system configuration which doesn't fit elsewhere
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Set plugdev users to be able to write USB
+    copy:
+      content: |
+        SUBSYSTEM=="usb", MODE="0660", GROUP="plugdev"
+      dest: /etc/udev/rules.d/00-local-usb-plugdev.rules
+      owner: root
+      group: root
+      mode: "0644"

@@ -5,6 +5,7 @@
   tasks: []
 
 - import_playbook: config.yml
+- import_playbook: udev.yml
 - import_playbook: apt.yml
 
 - import_playbook: packages.yml
@@ -19,6 +20,8 @@
 - import_playbook: golang.yml
 - import_playbook: jetbrains.yml
 - import_playbook: freecad.yml
+
+- import_playbook: yubico.yml
 
 - import_playbook: clang.yml
 
