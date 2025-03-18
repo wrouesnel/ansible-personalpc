@@ -1,0 +1,19 @@
+---
+# Yubico Software
+# Specifically, we want the yubico-piv-tool from upstream.
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Add Yubico PPA
+    apt_repository:
+      repo: 'ppa:yubico/stable'
+  
+  - name: Install packages
+    package:
+      name:
+        - yubikey-manager
+        - yubico-piv-tool
+        - pamu2fcfg
+        - libpam-u2f
+        - fido2-tools
