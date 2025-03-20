@@ -34,9 +34,19 @@
       - xz-utils
       - libnss3-tools
       - etherwake
+      - jq
+      # Identity tools
       - pcscd  # Smart card daemon
       - opensc
-      - jq
+      - libengine-pkcs11-openssl
+      - pkcs11-provider
+      - libtpm2-pkcs11-tools
+      - libtpm2-pkcs11-1
+      - tpm-tools
+      - tpm2-openssl
+      - tpm-tools-pkcs11
+      - gnutls-bin
+      - gnupg-pkcs11-scd
       state: latest
 
 # Boot packages
