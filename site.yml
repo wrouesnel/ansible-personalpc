@@ -9,6 +9,8 @@
 - import_playbook: apt.yml
 
 - import_playbook: packages.yml
+- import_playbook: yubico.yml
+
 - import_playbook: firefox.yml
 - import_playbook: syncthing.yml
 - import_playbook: firefox.yml
@@ -21,7 +23,6 @@
 - import_playbook: jetbrains.yml
 - import_playbook: freecad.yml
 
-- import_playbook: yubico.yml
 
 - import_playbook: clang.yml
 
