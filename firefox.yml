@@ -4,16 +4,23 @@
   connection: local
   become: true
   tasks:
-  - name: Add Firefox PPA
+  - name: Download Mozilla Key
+    get_url:
+      url: https://packages.mozilla.org/apt/repo-signing-key.gpg
+      dest: "{{apt_keyring_dir}}/packages.mozilla.org.asc"
+
+  - name: Add Firefox repo
     apt_repository:
-      repo: "ppa:mozillateam/ppa"
-      state: present
-  
+      filename: mozilla-firefox
+      repo: "{{item}}"
+    loop:
+    - deb [arch=amd64 signed-by={{apt_keyring_dir}}/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main
+
   - name: Pin Firefox
     copy:
       content: |
         Package: *
-        Pin: release o=LP-PPA-mozillateam
+        Pin: origin packages.mozilla.org
         Pin-Priority: 1001
       dest: /etc/apt/preferences.d/mozilla-firefox
       owner: root
@@ -34,44 +41,70 @@
       - firefox
       state: absent
 
-  # https://support.mozilla.org/en-US/kb/install-firefox-linux?as=u&utm_source=inproduct#w_install-firefox-deb-package-for-debian-based-distributions
-  - name: Deploy the security features fix
-    copy:
-      dest: /etc/apparmor.d/firefox-local
-      owner: root
-      group: root
-      mode: "0644"
-      content: |
-        # This profile allows everything and only exists to give the
-        # application a name instead of having the label "unconfined"
+  # # https://support.mozilla.org/en-US/kb/install-firefox-linux?as=u&utm_source=inproduct#w_install-firefox-deb-package-for-debian-based-distributions
+  # - name: Deploy the security features fix
+  #   copy:
+  #     dest: /etc/apparmor.d/firefox-local
+  #     owner: root
+  #     group: root
+  #     mode: "0644"
+  #     content: |
+  #       # This profile allows everything and only exists to give the
+  #       # application a name instead of having the label "unconfined"
 
-        abi <abi/4.0>,
+  #       abi <abi/3.0>,
 
-        include <tunables/global>
+  #       include <tunables/global>
 
-        profile firefox-local
+  #       profile firefox-local
 
-        /usr/bin/firefox/{firefox,firefox-bin,updater}
+  #       /usr/bin/firefox/{firefox,firefox-bin,updater}
 
-        flags=(unconfined) {
+  #       flags=(unconfined) {
 
-            userns, 
+  #           #userns, 
 
-            # Site-specific additions and overrides. See local/README for details. 
+  #           # Site-specific additions and overrides. See local/README for details. 
 
-            include if exists <local/firefox> 
+  #           include if exists <local/firefox> 
 
-        } 
-    register: firefox_apparmor
+  #       } 
+  #   register: firefox_apparmor
   
-  - name: Restart apparmor if updates
-    service:
-      name: apparmor
-      state: restarted
-    when: firefox_apparmor.changed
+  # - name: Fix deny all permissions in the apparmor profile
+  #   lineinfile:
+  #     regexp: '\s*deny /run/udev/data/\*\* r,'
+  #     line: '  #deny /run/udev/data/** r,'
+  #     path: /etc/apparmor.d/usr.bin.firefox
+  #   register: firefox_apparmor
 
+  # - name: Deploy the Yubikey fixups
+  #   copy: 
+  #     content: |                                                                 
+  #       # Site-specific additions and overrides for usr.bin.firefox.
+  #       # For more details, please see /etc/apparmor.d/local/README.
 
-  # Don't link Firefox to libnssckbi
+  #       # u2f (tested with Yubikey 4)
+  #       /sys/class/ r,
+  #       /sys/bus/ r,
+  #       /sys/class/hidraw/ r,
+  #       /run/udev/data/c24{1,7,9}:* r,
+  #       /dev/hidraw* rw,
+  #       # Yubikey NEO also needs this:
+  #       /sys/devices/**/hidraw/hidraw*/uevent r,
+  #     dest: /etc/apparmor.d/local/usr.bin.firefox
+  #     owner: root
+  #     group: root
+  #     mode: "0644"
+  #   register: firefox_apparmor
+
+  # - name: Restart apparmor if updates
+  #   service:
+  #     name: apparmor
+  #     state: restarted
+  #   when: firefox_apparmor.changed
+
+  # # Link Firefox to libnssckbi
   # - name: Link firefox to p11-kit
   #   file:
   #     path: /usr/lib/firefox/libnssckbi.so

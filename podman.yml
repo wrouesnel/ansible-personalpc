@@ -4,9 +4,12 @@
   become: true
   tasks:
   - name: Install podman
-    packages:
+    package:
       name:
-        - podman
+      - podman
+      - skopeo
+      - podman-docker
+
 
   - name: Ensure directory
     file:
@@ -50,6 +53,14 @@
       group: root
       mode: "0644"
 
+  - name: Ensure registries.conf.d exits
+    file:
+      path: /etc/containers/registries.conf.d
+      owner: root
+      group: root
+      mode: "0755"
+      state: directory
+
   - name: Configure unqualified search registries
     copy:
       dest: /etc/containers/registries.conf.d/unqualified-search-registries.conf
@@ -68,8 +79,10 @@
         {% for item in registries %}
         [[registry]]
         location = "{{item}}"
+        {% if network.domain is defined %}
         [[registry.mirror]]
         location = "registry-mirror.{{network.domain}}/{{item}}"
+        {% endif %}
         {% endfor %}
       owner: root
       group: root
