@@ -1,0 +1,19 @@
+# Git auxilliary setup
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Install packages
+    package:
+      name:
+        - libsecret-1-0
+        - libsecret-1-dev
+        - libglib2.0-dev
+        - build-essential
+      state: latest
+  
+  - name: Build the git credential helper
+    shell: make --directory=/usr/share/doc/git/contrib/credential/libsecret
+  
+  - name: Configure the helper
+    shell: git config --system credential.helper /usr/share/doc/git/contrib/credential/libsecret/git-credential-libsecret

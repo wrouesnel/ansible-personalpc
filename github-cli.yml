@@ -1,0 +1,22 @@
+---
+# General system configuration which doesn't fit elsewhere
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Download Clang Key
+    get_url:
+      url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+      dest: "{{apt_keyring_dir}}/githubcli-archive-keyring.gpg"
+
+  - name: Add Github CLI Repo
+    apt_repository:
+      filename: githubcli
+      repo: "{{item}}"
+    loop:
+    - deb [arch=amd64 signed-by={{apt_keyring_dir}}/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main
+
+  - name: Install packages 
+    package:
+      name:
+      - gh

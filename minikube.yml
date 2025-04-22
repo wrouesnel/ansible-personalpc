@@ -1,0 +1,24 @@
+# Install minikube
+- hosts: localhost
+  connection: local
+  become: false
+  vars:
+    minikube_dir: "{{ [user_dirs.opt, 'minikube'] | path_join }}"
+    minikube_bin_name: minikube-linux-amd64
+  tasks:
+  - name: Create an opt directory for minikube
+    file:
+      path: "{{ minikube_dir }}"
+      state: directory
+
+  - name: Download minikube
+    get_url:
+      url: https://github.com/kubernetes/minikube/releases/latest/download/{{minikube_bin_name}}
+      dest: "{{ [minikube_dir, minikube_bin_name] | path_join }}"
+    
+  - name: Ensure a link to minikube is in bin
+    file:
+      src: "{{ [minikube_dir, minikube_bin_name] | path_join }}"
+      dest: "{{ [user_dirs.bin, 'minikube'] | path_join }}"
+      mode: "0755"
+      state: link

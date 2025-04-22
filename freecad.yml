@@ -8,3 +8,4 @@
       src: "{{ user_dirs.opt }}/freecad/org.freecad.FreeCAD.desktop"
       dest: "{{ home_dir }}/.local/share/applications/org.freecad.FreeCAD.desktop"
       state: link
+      force: true

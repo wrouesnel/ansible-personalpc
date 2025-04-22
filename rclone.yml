@@ -1,0 +1,21 @@
+# rclone
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - file:
+      path: "{{ [user_dirs.opt, 'rclone'] | path_join }}"
+      state: directory
+
+  - name: Download rclone
+    unarchive:
+      src: "https://downloads.rclone.org/rclone-current-linux-amd64.zip"
+      dest: "{{ [user_dirs.opt, 'rclone'] | path_join }}"
+      remote_src: true
+      extra_opts:
+      - -j
+
+  - file:
+      src: "{{ [user_dirs.opt, 'rclone', 'rclone'] | path_join }}"
+      dest: "{{ [ user_dirs.bin, 'rclone' ] | path_join }}"
+      state: link

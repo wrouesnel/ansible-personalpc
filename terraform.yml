@@ -1,0 +1,27 @@
+# Terraform (via Open Tofu)
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Download OpenTofu GPG key
+    get_url:
+      url: "{{item.src}}"
+      dest: "{{apt_keyring_dir}}/{{item.dest}}"
+    loop:
+    - src: https://get.opentofu.org/opentofu.gpg
+      dest: opentofu.gpg
+    - src: https://packages.opentofu.org/opentofu/tofu/gpgkey
+      dest: opentofu-repo.gpg.key
+
+  - name: Install OpenTofu
+    apt_repository:
+      filename: opentofu
+      repo: "{{item}}"
+    loop:
+    - deb [signed-by={{apt_keyring_dir}}/opentofu.gpg,{{apt_keyring_dir}}/opentofu-repo.gpg.key] https://packages.opentofu.org/opentofu/tofu/any/ any main
+    - deb-src [signed-by={{apt_keyring_dir}}/opentofu.gpg,{{apt_keyring_dir}}/opentofu-repo.gpg.key] https://packages.opentofu.org/opentofu/tofu/any/ any main
+
+  - name: Install packages
+    package:
+      name:
+      - tofu

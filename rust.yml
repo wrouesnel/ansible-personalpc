@@ -1,0 +1,17 @@
+---
+# Rust Config
+- hosts: localhost
+  connection: local
+  become: false
+  vars:
+    rustup_download_url: https://sh.rustup.rs
+    rustup_download_path: "{{ [ user_dirs.bin, 'rustup' ] | path_join }}"
+  tasks:
+  - name: Download RustUp
+    get_url:
+      url: "{{ rustup_download_url }}"
+      dest: "{{ rustup_download_path }}"
+      mode: "0755"
+
+  - name: Run rustup
+    command: rustup --no-modify-path --default-toolchain nightly -y
