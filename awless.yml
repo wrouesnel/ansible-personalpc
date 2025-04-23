@@ -1,0 +1,71 @@
+# awless
+- hosts: localhost
+  connection: local
+  become: false
+  vars:
+  tasks:
+  - name: Ensure install directory
+    file:
+      path: "{{ user_dirs.opt }}/awless"
+      state: directory
+  
+  - name: Get the latest version
+    set_fact:
+      awless_releases: '{{ query("github_releases", user="wallix", repo="awless", latest=1 )[0] }}'
+
+
+  - name: Check installed version
+    shell: awless --version | cut -d' ' -f1 | cut -d'=' -f2 | tr -d ','
+    register: awless_result
+    failed_when: false
+
+  - name: Get the asset
+    set_fact:
+      awless_asset: |-
+        {%- set assets = [] -%}
+        {%- for asset in (awless_releases.in_order|first).assets -%}
+          {%- if (ansible_system|lower) in asset.name -%}
+            {%- if (ansible_architecture|lower).replace("x86_64","amd64") in asset.name -%}
+              {%- do assets.append(asset) -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{assets|first}}
+
+  - name: Check if new version needed
+    set_fact:
+      awless_latest_version: "{{ (awless_releases.in_order|first).tag_name }}"
+      awless_current_version: >-
+        {{ awless_result.stdout|trim }}
+  
+  - name: Check if new version needed
+    set_fact:
+      awless_new_version: >-
+        {{ awless_latest_version != awless_current_version }}
+
+  - name: Install new awless
+    get_url:
+      url: "{{ awless_asset.browser_download_url }}"
+      dest: "{{ user_dirs.opt }}/awless/"
+    register: awless_unarchive
+    when: awless_new_version
+
+  - name: Extract the binary
+    unarchive:
+      src: "{{ user_dirs.opt }}/awless/{{ awless_asset.name }}"
+      dest: "{{ user_dirs.opt }}/awless/awless"
+    when: awless_new_version
+
+  - name: Remove archive file
+    file:
+      path: "{{ user_dirs.opt }}/awless/{{ awless_asset.name }}"
+      state: absent
+    when: awless_new_version
+
+  - name: Ensure bin link
+    file:
+      src: "{{ user_dirs.opt }}/awless/{{ awless_asset.name | splitext | first }}"
+      dest: "{{ user_dirs.bin }}/awless"
+      mode: "0755"
+      state: link
+    when: awless_new_version
