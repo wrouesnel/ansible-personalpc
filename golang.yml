@@ -36,6 +36,7 @@
     slurp:
       src: "{{ [user_dirs.opt, 'go', 'VERSION' ] | path_join }}"
     register: local_golang_version_file
+    when: local_golang_local_version_file_st.stat.exists
 
   - name: Get the current version
     set_fact:

@@ -1,0 +1,75 @@
+# restic
+- hosts: localhost
+  connection: local
+  become: false
+  vars:
+    # This is synthetic - we deploy it
+    restic_versionfilename: VERSION
+  tasks:
+  - name: Ensure install directory
+    file:
+      path: "{{ user_dirs.opt }}/restic"
+      state: directory
+  
+  - name: Get the latest version
+    set_fact:
+      restic_releases: '{{ query("github_releases", user="restic", repo="restic", latest=1 )[0] }}'
+
+
+  - name: Check installed version
+    slurp:
+      src: "{{ user_dirs.opt }}/restic/{{ restic_versionfilename }}"
+    register: restic_versionfile
+    failed_when: false
+
+  - name: Get the asset
+    set_fact:
+      restic_asset: |-
+        {%- set assets = [] -%}
+        {%- for asset in (restic_releases.in_order|first).assets -%}
+          {%- if (ansible_system|lower) in asset.name -%}
+            {%- if (ansible_architecture|lower).replace("x86_64","amd64") in asset.name -%}
+              {%- do assets.append(asset) -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{assets|first}}
+
+  - name: Check if new version needed
+    set_fact:
+      restic_latest_version: "{{ (restic_releases.in_order|first).tag_name }}"
+      restic_current_version: >-
+        {{ restic_versionfile.content|default(""|b64encode)|b64decode|trim }}
+  
+  - name: Check if new version needed
+    set_fact:
+      restic_new_version: >-
+        {{ restic_latest_version != restic_current_version }}
+
+  - name: Install new restic
+    get_url:
+      url: "{{ restic_asset.browser_download_url }}"
+      dest: "{{ user_dirs.opt }}/restic/"
+    register: restic_unarchive
+    when: restic_new_version
+
+  - name: Check if binary is extracted
+    stat:
+      path: "{{ user_dirs.opt }}/restic/{{ restic_asset.name | splitext | first }}"
+    register: restic_extracted
+
+  - name: Extract the binary
+    command: bzip2 -d "{{ user_dirs.opt }}/restic/{{ restic_asset.name }}"
+    when: not restic_extracted.stat.exists
+
+  - name: Set version file
+    copy:
+      content: "{{ (restic_releases.in_order|first).tag_name | trim}}"
+      dest: "{{ user_dirs.opt }}/restic/{{ restic_versionfilename }}"
+
+  - name: Set link
+    file:
+      src: "{{ user_dirs.opt }}/restic/{{ restic_asset.name | splitext | first }}"
+      dest: "{{ user_dirs.bin }}/restic"
+      mode: "0755"
+      state: link

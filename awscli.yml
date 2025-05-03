@@ -1,0 +1,51 @@
+# AWS CLI V2
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Download AWS CLI v2
+    get_url:
+      url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+      dest: "{{ user_dirs.downloads }}/awscliv2.zip"
+
+  - name: Create install directory
+    file:
+      path: "{{ user_dirs.opt }}/awscli"
+      state: directory
+
+  - name: Ensure bin directory
+    file:
+      path: "{{ user_dirs.bin }}"
+      state: directory
+
+
+  - name: Extract to install path
+    unarchive:
+      src: "{{ user_dirs.downloads }}/awscliv2.zip"
+      dest: "{{ user_dirs.opt }}/awscli"
+
+  - name: Ensure symlinks
+    file:
+      src: "{{ user_dirs.opt }}/awscli/aws/dist/aws_completer"
+      dest: "{{ user_dirs.bin }}/aws_completer"
+      state: link
+
+  - name: Ensure symlinks
+    file:
+      src: "{{ user_dirs.opt }}/awscli/aws/dist/aws"
+      dest: "{{ user_dirs.bin }}/aws"
+      state: link
+
+# Session manager
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Download AWS Session Manager Plugin
+    get_url:
+      url: "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb"
+      dest: "{{ user_dirs.downloads }}/session-manager-plugin.deb"
+  
+  - name: Ensure session manager plugin is installed
+    apt:
+      deb: "{{ user_dirs.downloads }}/session-manager-plugin.deb"

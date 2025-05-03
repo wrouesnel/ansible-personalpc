@@ -1,0 +1,10 @@
+# Kubernetes CLI
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - copy:
+      content: |
+        {{ hostvars[inventory_hostname] | to_nice_yaml }}
+      dest: facts.output.yml
+    become: false

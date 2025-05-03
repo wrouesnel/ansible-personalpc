@@ -5,6 +5,7 @@ home_dir: "{{ lookup('env', 'HOME') }}"
 user_dirs:
   opt: "{{ home_dir }}/opt"
   downloads: "{{ home_dir }}/Downloads"
+  bin: "{{ home_dir }}/bin"
 
 apt_keyring_dir: /etc/apt/keyrings
 

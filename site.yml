@@ -5,15 +5,14 @@
   tasks: []
 
 - import_playbook: config.yml
-- import_playbook: udev.yml
 - import_playbook: apt.yml
+- import_playbook: udev.yml
 
 - import_playbook: packages.yml
 - import_playbook: yubico.yml
 
 - import_playbook: firefox.yml
 - import_playbook: syncthing.yml
-- import_playbook: firefox.yml
 - import_playbook: vscode.yml
 - import_playbook: podman.yml
 - import_playbook: docker-compose.yml
@@ -22,9 +21,25 @@
 - import_playbook: golang.yml
 - import_playbook: jetbrains.yml
 - import_playbook: freecad.yml
+- import_playbook: rust.yml
 
+- import_playbook: bwrap.yml
 
 - import_playbook: clang.yml
+
+- import_playbook: libvirt.yml
+
+# Support CLI tools
+- import_playbook: awscli.yml
+- import_playbook: kubectl.yml
+- import_playbook: helm.yml
+- import_playbook: githubcli.yml
+- import_playbook: minikube.yml
+- import_playbook: minio.yml
+- import_playbook: rclone.yml
+- import_playbook: awless.yml
+- import_playbook: terraform.yml
+- import_playbook: restic.yml
 
 - import_playbook: ca-certificates-tweaks.yml
 
