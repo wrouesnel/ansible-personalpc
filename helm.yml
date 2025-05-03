@@ -1,0 +1,60 @@
+# Kubernetes CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Helm release
+    set_fact:
+      helm_releases: |
+        {{ query("github_releases", user="helm", repo="helm", latest=1)[0] }}
+
+  - name: Get the current Helm version
+    set_fact:
+      helm_version: "{{ helm_releases.in_order[0]['tag_name'] }}"
+
+  - name: Get current Helm names
+    set_fact:
+      helm_download_name: helm-{{ helm_version }}-linux-amd64.tar.gz
+      helm_install_path: "{{ user_dirs.opt }}/helm"
+
+  - name: Check current helm version
+    block:
+    - file:
+        path: "{{ helm_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ helm_install_path }}/helm"
+      register: helm_exe
+    
+    - shell: "{{ helm_install_path }}/helm version"
+      register: helm_exe_version
+      when: helm_exe.stat.exists
+
+    - set_fact:
+        local_helm_version: >-
+          {{ helm_exe_version.stdout | regex_search('Version:"(.*?)"', '\1') }}
+      when: helm_exe.stat.exists
+    
+    - set_fact:
+        local_helm_version: "0.0.0"
+      when: not helm_exe.stat.exists
+
+  - name: Update Helm if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "https://get.helm.sh/{{ helm_download_name }}"
+        dest: "{{ user_dirs.downloads }}/{{ helm_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ helm_download_name }}"
+        dest: "{{ helm_install_path }}"
+        extra_opts:
+        - --strip-components=1
+
+    - file:
+        src: "{{ helm_install_path }}/helm"
+        dest: "{{ user_dirs.bin }}/helm"
+        state: link
+    when: helm_version != local_helm_version

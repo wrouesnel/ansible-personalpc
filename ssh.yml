@@ -1,0 +1,20 @@
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Ensure user SSH config dir exists
+    file:
+      path: "{{ [home_dir, '.ssh' ]| path_join }}"
+      state: directory
+      mode: "0700"
+
+  - name: Configure SSH to use TPM by default
+    blockinfile:
+      create: true
+      path: "{{ [home_dir, '.ssh', 'config']| path_join }}"
+      append_newline: true
+      prepend_newline: true
+      block: |
+        Host *
+            PKCS11Provider /usr/lib/x86_64-linux-gnu/pkcs11/libtpm2_pkcs11.so
+        

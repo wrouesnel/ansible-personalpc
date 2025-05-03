@@ -1,0 +1,10 @@
+# Minio CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Download the Minio Client
+    get_url:
+      url: "https://dl.min.io/client/mc/release/linux-amd64/mc"
+      dest: "{{ [user_dirs.bin, 'mc'] | path_join }}"
+      mode: "0755"

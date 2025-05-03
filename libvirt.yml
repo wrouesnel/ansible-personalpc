@@ -11,9 +11,10 @@
       - qemu-user
       - qemu-utils
       - qemu-system-gui  # Needed for GL passthrough to work
-      - qemu-system-modules-spice
-      - qemu-system-modules-opengl
-      - libvirt-bin
+      #- qemu-system-modules-spice
+      #- qemu-system-modules-opengl
+      - qemu-block-extra
+      - libvirt-daemon
       - libvirt-clients
       - virt-manager
       - virt-viewer
@@ -21,11 +22,9 @@
       - numad
       state: latest
 
-  - name: configure the libvirt network
-    virt_net:
-      command: edit
-      name: default
-      xml: |
+  - name: Define the intended XML
+    set_fact:
+      libvirt_default_xml: |
         <network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
           <name>default</name>
           <forward mode='nat'/>
@@ -34,21 +33,56 @@
           <domain name='default.libvirt' localOnly='yes'/>
           <ip address='{{ network.vm_network | ipaddr("address") }}' netmask='{{ network.vm_network | ipaddr("netmask") }}'>
             <dhcp>
-              <range start='{{ network.vm_network | ipaddr("next_usable")) }}' end='{{ network.vm_network | ipaddr("last_usable") }}'/>
+              <range start='{{ network.vm_network | ipaddr("next_usable") }}' end='{{ network.vm_network | ipaddr("last_usable") }}'/>
             </dhcp>
           </ip>
         </network>
+
+  - name: Ensure the default network is up to date
+    block:
+    - tempfile:
+        state: file
+        suffix: .xml
+      register: temp_xml
+      changed_when: false
+    
+    - copy:
+        dest: "{{temp_xml.path}}"
+        content: "{{libvirt_default_xml}}"
+      changed_when: false
+
+    - shell: virsh net-define --file {{ temp_xml.path }}
+    always:
+    - file:
+        path: "{{ temp_xml.path }}"
+        state: absent
+      changed_when: false
+
+  - name: ensure resolved.conf.d exists
+    file:
+      path: /etc/systemd/resolved.conf.d
+      owner: root
+      group: root
+      mode: "0755"
+      state: directory
 
   - name: setup libvirt redirect
     copy:
       dest: /etc/systemd/resolved.conf.d/libvirt-redirect.conf
       content: |
         [Resolve]
-        DNS={{ network.vm_network | ipaddr("address") }}
-        Domains=~default.libvirt
+        DNS={{ network.vm_network | ipaddr("address") }}%virbr0#default.libvirt
       owner: root
       group: root
       mode: "0644"
+
+  - name: ensure resolved.conf.d exists
+    file:
+      path: /etc/qemu
+      owner: root
+      group: root
+      mode: "0755"
+      state: directory
 
   # TODO: apt settings to persist the bridge helper
   - name: setup bridge helper

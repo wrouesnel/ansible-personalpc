@@ -1,2 +1,4 @@
 Acquire::http::ProxyAutoDetect "/usr/local/bin/proxydetect";
+{% if network.domain is defined %}
 Acquire::https::CAInfo "/etc/ssl/mitmproxies/{{network.domain}}/ca-certificates.crt";
+{% endif %}

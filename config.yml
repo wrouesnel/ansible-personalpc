@@ -18,3 +18,26 @@
       value: '2097152'
       state: present
   
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Ensure the user config dir exists
+    block:
+    - file:
+        path: "{{ home_dir }}/config"
+        state: directory
+    
+    - file:
+        path: "{{ home_dir }}/config/shared"
+        state: directory
+
+    - file:
+        path: "{{ home_dir }}/config/shared/linux"
+        state: directory
+  
+  - name: Ensure user config bashrc loads
+    lineinfile:
+      path: "{{ home_dir }}/.bashrc"
+      regexp: ^source $HOME/config/shared/linux/bashrc
+      line: source $HOME/config/shared/linux/bashrc
