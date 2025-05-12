@@ -29,15 +29,15 @@
         state: directory
     
     - file:
-        path: "{{ home_dir }}/config/shared"
+        path: "{{ home_dir }}/config/linux"
         state: directory
 
     - file:
-        path: "{{ home_dir }}/config/shared/linux"
+        path: "{{ home_dir }}/config/linux/shared"
         state: directory
   
   - name: Ensure user config bashrc loads
     lineinfile:
       path: "{{ home_dir }}/.bashrc"
-      regexp: ^source $HOME/config/shared/linux/bashrc
-      line: source $HOME/config/shared/linux/bashrc
+      regexp: ^source $HOME/config/linux/shared/bashrc
+      line: source $HOME/config/linux/shared/bashrc

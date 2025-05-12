@@ -27,13 +27,13 @@
 
 - import_playbook: clang.yml
 
-- import_playbook: libvirt.yml
+# - import_playbook: libvirt.yml
 
 # Support CLI tools
 - import_playbook: awscli.yml
 - import_playbook: kubectl.yml
 - import_playbook: helm.yml
-- import_playbook: githubcli.yml
+- import_playbook: github-cli.yml
 - import_playbook: minikube.yml
 - import_playbook: minio.yml
 - import_playbook: rclone.yml

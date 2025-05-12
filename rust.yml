@@ -13,5 +13,11 @@
       dest: "{{ rustup_download_path }}"
       mode: "0755"
 
-  - name: Run rustup
-    command: rustup --no-modify-path --default-toolchain nightly -y
+  - name: Update rust
+    command: rustup update
+
+  - name: Ensure nightly
+    command: rustup toolchain install nightly
+
+  - name: Switch to nightly
+    command: rustup default nightly
