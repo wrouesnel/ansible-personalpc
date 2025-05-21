@@ -9,7 +9,7 @@
       dest: "{{ [user_dirs.bin, 'mc'] | path_join }}"
       mode: "0755"
 
-  - name: Download Minio
+  - name: Download the Minio Server
     get_url:
       url: "https://dl.min.io/server/minio/release/linux-amd64/minio"
       dest: "{{ [user_dirs.bin, 'minio'] | path_join }}"
