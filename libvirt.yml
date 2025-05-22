@@ -20,7 +20,45 @@
       - virt-viewer
       - ksmtuned
       - numad
+      - libnss-libvirt
       state: latest
+
+  - name: ensure libvirt is injected into nsswitch.conf
+    slurp:
+      path: /etc/nsswitch.conf
+    register: nsswitch_conf
+    changed_when: false
+
+  - set_fact:
+      nsswitch_conf_hosts: |-
+        {%- set hosts = [] -%}
+        {%- for line in (nsswitch_conf.content|b64decode).split("\n") -%}
+          {%- if line.startswith("hosts:") -%}
+            {%- for part in line.split() if part != "hosts:" -%}
+              {%- do hosts.append(part) -%}
+            {%- endfor -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- set files_pos = 1 -%}
+        {%- for part in hosts -%}
+          {%- if part == "files" -%}
+            {% set files_pos = loop.counter0 %}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if "libvirt" not in hosts -%}
+          {%- do hosts.insert(files_pos, "libvirt") -%}
+        {%- endif -%}
+        {%- if "libvirt_guest" not in hosts -%}
+          {%- do hosts.insert(files_pos+1, "libvirt_guest") -%}
+        {%- endif -%}
+        {{hosts|join(" ")}}
+
+  - name: update nsswitch.conf hosts line
+    lineinfile:
+      backrefs: true
+      regexp: '^hosts:(\s+).*'
+      line: 'hosts:\1{{nsswitch_conf_hosts}}'
+      path: /etc/nsswitch.conf
 
   - name: Define the intended XML
     set_fact:
