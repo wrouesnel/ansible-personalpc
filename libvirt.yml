@@ -62,7 +62,7 @@
 
   - name: Define the intended XML
     set_fact:
-      libvirt_default_xml: |
+      intended_default_xml: |
         <network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
           <name>default</name>
           <forward mode='nat'/>
@@ -74,27 +74,65 @@
               <range start='{{ network.vm_network | ipaddr("next_usable") }}' end='{{ network.vm_network | ipaddr("last_usable") }}'/>
             </dhcp>
           </ip>
+          <dnsmasq:options>
+            <dnsmasq:option value='server=/default.libvirt/192.168.122.2'/>
+          </dnsmasq:options>
         </network>
 
-  - name: Ensure the default network is up to date
+  - name: Get the existing XML
+    command: virsh net-dumpxml default
+    register: existing_default_xml
+    changed_when: false
+    failed_when: false
+
+  - name: Edit the network if needed
     block:
     - tempfile:
-        state: file
-        suffix: .xml
-      register: temp_xml
-      changed_when: false
-    
-    - copy:
-        dest: "{{temp_xml.path}}"
-        content: "{{libvirt_default_xml}}"
+      register: existing_temp_file
       changed_when: false
 
-    - shell: virsh net-define --file {{ temp_xml.path }}
+    - tempfile:
+      register: intended_temp_file
+      changed_when: false
+
+    - copy:
+        content: '{{ existing_default_xml.stdout }}'
+        dest: "{{existing_temp_file.path}}"
+      changed_when: false
+
+    - copy:
+        content: '{{ intended_default_xml }}'
+        dest: "{{intended_temp_file.path}}"
+      changed_when: false
+
+    - name: extract the UUID of the network
+      xml:
+        path: "{{ existing_temp_file.path}}"
+        xpath: '//network/uuid'
+        content: text
+      register: existing_network_uuid
+      changed_when: false
+
+    - name: inject the UUID into the network
+      xml:
+        path: "{{ intended_temp_file.path}}"
+        xpath: '//network'
+        add_children: "{{existing_network_uuid.matches}}"
+      register: existing_network_uuid
+      changed_when: false
+
+    - name: Update the network
+      command: virsh net-define --file {{intended_temp_file.path}} --validate
     always:
     - file:
-        path: "{{ temp_xml.path }}"
+        path: "{{item}}"
         state: absent
+      loop:
+      - "{{existing_temp_file.path}}"
+      - "{{intended_temp_file.path}}"
       changed_when: false
+    when: query("normalize_xml", existing_default_xml.stdout, remove="//network/uuid")[0] != query("normalize_xml", intended_default_xml, remove="//network/uuid")[0]
+
 
   - name: ensure resolved.conf.d exists
     file:
