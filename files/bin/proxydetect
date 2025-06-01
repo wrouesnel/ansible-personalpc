@@ -1,20 +1,21 @@
 #!/bin/bash
+# /usr/local/bin/proxydetect
 # Script to check if squid is running locally
 
 source /etc/default/localnetwork
 
-if [ -z "${DOMAIN}" ]; then
-	echo "No Proxy Configured" 1>&2
-	echo DIRECT
-else
-	#if /bin/nc -w 1 -z "${DOMAIN}" 3128; then
-	if /usr/bin/curl -s --max-time 1 --proxy "http://${DOMAIN}:3128" "http://detectportal.firefox.com/success.txt?ipv4"; then
-		proxy="http://${DOMAIN}:3128"
+proxydetect() {
+	proxy="$1"
+	if /usr/bin/curl -s --max-time 1 --proxy "http://${proxy}:3128" "http://detectportal.firefox.com/success.txt?ipv4"; then
+		proxy="http://${proxy}:3128"
 		echo "$proxy"
 		echo "Local Proxy is Up: $proxy" 1>&2
 	else
 		echo "No Proxy Found" 1>&2
 		echo DIRECT
 	fi
-fi
+}
+
+proxydetect "${proxy:-127.0.0.1}"
+
 exit 0
