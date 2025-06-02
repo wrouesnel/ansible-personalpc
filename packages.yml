@@ -99,7 +99,6 @@
       - dhcping
       - htop
       - iotop
-      - opensnitch
       - ovmf
       - p11-kit
       - p11-kit-modules
@@ -115,7 +114,6 @@
       - git-gui
       - system-config-printer
       - gnome-calculator
-
       state: latest
 
 # Personalization packages - the applications I use.
