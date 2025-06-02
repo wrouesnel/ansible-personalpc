@@ -50,20 +50,20 @@
       state: latest
 
 # Boot packages
-- hosts: localhost
-  connection: local
-  become: true
-  tasks:
-  - name: Boot packages
-    package:
-      name:
-      - clevis
-      - clevis-initramfs
-      - clevis-luks
-      - clevis-systemd
-      - clevis-tpm2
-      - clevis-udisks2
-      state: latest
+# - hosts: localhost
+#   connection: local
+#   become: true
+#   tasks:
+#   - name: Boot packages
+#     package:
+#       name:
+#       - clevis
+#       - clevis-initramfs
+#       - clevis-luks
+#       - clevis-systemd
+#       - clevis-tpm2
+#       - clevis-udisks2
+#       state: latest
 
 # Desktop packages. This produces a functional desktop and would be applicable everywhere.
 - hosts: localhost
