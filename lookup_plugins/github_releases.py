@@ -47,4 +47,5 @@ class LookupModule(LookupBase):
         result = {}
         result["by_tag"] = { item["tag_name"].lower():item for item in data if "tag_name" in item }
         result["in_order"] = data
+        result["asset_by_tag"] = { item["tag_name"].lower():{asset["name"]:asset for asset in item["assets"] } for item in data if "tag_name" in item }
         return [result]
