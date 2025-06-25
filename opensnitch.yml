@@ -1,0 +1,27 @@
+---
+# OpenSnitch
+# - hosts: localhost
+#   connection: local
+#   become: false
+#   tasks:
+#   - name: Get the latest OpenSnitch release
+#     set_fact:
+#       opensnitch_releases: |
+#         {{ query("github_releases", user="evilsocket", repo="opensnitch", latest=1)[0] }}
+  
+#   - name: Get the current OpenSnitch version
+#     set_fact:
+#       opensnitch_version: "{{ opensnitch_releases.in_order[0]['tag_name'] }}"
+
+  # - name: Get the current OpenSnitch version
+  #   command: dpkg-query -W opensnitch
+  #   changed_when: false
+  #   register: opensnitch
+
+  # - name: Get the current OpenSnitch version
+
+
+  # - name: Get current Helm names
+  #   set_fact:
+  #     helm_download_name: helm-{{ helm_version }}-linux-amd64.tar.gz
+  #     helm_install_path: "{{ user_dirs.opt }}/helm"
