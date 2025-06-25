@@ -1,0 +1,98 @@
+# Podman desktop
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Podman Desktop release
+    set_fact:
+      podman_desktop_releases: |
+        {{ query("github_releases", user="podman-desktop", repo="podman-desktop", latest=1)[0] }}
+
+  - name: Get the current Podman Desktop version
+    set_fact:
+      podman_desktop_version: "{{ podman_desktop_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Podman Desktop names
+    set_fact:
+      podman_desktop_download_name: podman-desktop-{{ podman_desktop_version }}.tar.gz
+      podman_desktop_install_path: "/opt/podman-desktop"
+
+  - name: Check current podman_desktop version
+    block:
+    - file:
+        path: "{{ podman_desktop_install_path }}"
+        state: directory
+      become: true
+
+    - stat:
+        path: "{{ podman_desktop_install_path }}/version"
+      register: podman_desktop_exe
+    
+    - shell: cat "{{ podman_desktop_install_path }}/version"
+      register: podman_desktop_exe_version
+      when: podman_desktop_exe.stat.exists
+
+    - set_fact:
+        local_podman_desktop_version: >-
+          {{ podman_desktop_exe_version.stdout.strip() }}
+      when: podman_desktop_exe.stat.exists
+    
+    - set_fact:
+        local_podman_desktop_version: "0.0.0"
+      when: not podman_desktop_exe.stat.exists
+
+  - name: Update Podman Desktop if needed
+    become: true
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ podman_desktop_releases.asset_by_tag['v' + podman_desktop_version][podman_desktop_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ podman_desktop_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ podman_desktop_download_name }}"
+        dest: "{{ podman_desktop_install_path }}"
+        extra_opts:
+        - --strip-components=1
+
+    - name: Write the version file
+      copy:
+        content: "{{podman_desktop_version}}"
+        dest: "{{ podman_desktop_install_path }}/version"
+        owner: root
+        group: root
+        mode: "0644"
+    # - file:
+    #     src: "{{ podman_desktop_install_path }}/podman_desktop"
+    #     dest: "{{ user_dirs.bin }}/podman_desktop"
+    #     state: link
+    when: podman_desktop_version != local_podman_desktop_version
+
+  - name: Ensure the SUID helper is correctly installed
+    become: true
+    file:
+      path: /opt/podman-desktop/chrome-sandbox
+      owner: root
+      group: root
+      mode: "4755"
+    
+
+  - name: Ensure the podman logo exists
+    get_url:
+      url: https://podman-desktop.io/img/logo.svg
+      dest: "{{ podman_desktop_install_path }}/logo.svg"
+    become: true
+
+  - name: Calculate launcher data
+    set_fact:
+      desktop_name: "Podman Desktop"
+      desktop_icon: "{{ podman_desktop_install_path }}/logo.svg"
+      desktop_exec: "{{ podman_desktop_install_path }}/podman-desktop"
+      desktop_comment: "Work with images, containers, pods, and Kubernetes."
+      desktop_startup_wm_class: "podman desktop"
+
+  - name: Template the launcher
+    template:
+      src: templates/home/.local/share/applications/jetbrains.desktop
+      dest: "/usr/local/share/applications/podman-desktop.desktop"
+    become: true

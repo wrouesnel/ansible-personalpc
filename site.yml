@@ -16,6 +16,7 @@
 - import_playbook: vscode.yml
 - import_playbook: podman.yml
 - import_playbook: docker-compose.yml
+- import_playbook: podman-desktop.yml
 - import_playbook: pyenv.yml
 
 - import_playbook: golang.yml
