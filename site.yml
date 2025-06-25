@@ -34,6 +34,7 @@
 # Support CLI tools
 - import_playbook: awscli.yml
 - import_playbook: kubectl.yml
+- import_playbook: stern.yml
 - import_playbook: helm.yml
 - import_playbook: github-cli.yml
 - import_playbook: minikube.yml

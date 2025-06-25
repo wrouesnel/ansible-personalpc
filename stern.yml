@@ -1,0 +1,58 @@
+# Stern CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Stern release
+    set_fact:
+      stern_releases: |
+        {{ query("github_releases", user="stern", repo="stern", latest=1)[0] }}
+
+  - name: Get the current Stern version
+    set_fact:
+      stern_version: "{{ stern_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Stern names
+    set_fact:
+      stern_download_name: stern_{{ stern_version }}_linux_amd64.tar.gz
+      stern_install_path: "{{ user_dirs.opt }}/stern"
+
+  - name: Check current stern version
+    block:
+    - file:
+        path: "{{ stern_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ stern_install_path }}/stern"
+      register: stern_exe
+    
+    - shell: "{{ stern_install_path }}/stern --version"
+      register: stern_exe_version
+      when: stern_exe.stat.exists
+
+    - set_fact:
+        local_stern_version: >-
+          {{ stern_exe_version.stdout | regex_search('version: (\S*)', '\1') | first }}
+      when: stern_exe.stat.exists
+    
+    - set_fact:
+        local_stern_version: "0.0.0"
+      when: not stern_exe.stat.exists
+
+  - name: Update Stern if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ stern_releases.asset_by_tag[stern_version][stern_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ stern_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ stern_download_name }}"
+        dest: "{{ stern_install_path }}"
+
+    - file:
+        src: "{{ stern_install_path }}/stern"
+        dest: "{{ user_dirs.bin }}/stern"
+        state: link
+    when: stern_version != local_stern_version
