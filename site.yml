@@ -44,6 +44,7 @@
 - import_playbook: awless.yml
 - import_playbook: terraform.yml
 - import_playbook: restic.yml
+- import_playbook: bazelisk.yml
 
 - import_playbook: ca-certificates-tweaks.yml
 
