@@ -19,6 +19,10 @@
   - name: Pin Firefox
     copy:
       content: |
+        Package: firefox
+        Pin: release={{ ansible_distribution_release }}
+        Pin-Priority: 1
+
         Package: *
         Pin: origin packages.mozilla.org
         Pin-Priority: 1001
