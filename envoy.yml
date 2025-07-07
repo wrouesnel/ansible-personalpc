@@ -1,0 +1,62 @@
+# Envoy Gateway
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Envoy release
+    set_fact:
+      envoy_releases: |
+        {{ query("github_releases", user="envoyproxy", repo="gateway", latest=1)[0] }}
+
+  - name: Get the current Envoy version
+    set_fact:
+      envoy_version: "{{ envoy_releases.in_order[0]['tag_name'] }}"
+
+  - name: Get current Envoy names
+    set_fact:
+      envoy_download_name: envoy-gateway_{{envoy_version}}_linux_amd64.tar.gz
+      envoy_install_path: "{{ user_dirs.opt }}/envoy-gateway"
+
+  - name: Check current envoy version
+    block:
+    - file:
+        path: "{{ envoy_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ envoy_install_path }}/envoy-gateway"
+      register: envoy_exe
+    
+    - shell: "{{ envoy_install_path }}/envoy-gateway version"
+      register: envoy_exe_version
+      when: envoy_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_envoy_version: >-
+          {{ envoy_exe_version.stdout | regex_search('ENVOY_GATEWAY_VERSION: (\S*)', '\1') | first }}
+      when: envoy_exe.stat.exists
+    
+    - set_fact:
+        local_envoy_version: "0.0.0"
+      when: not envoy_exe.stat.exists
+
+  - name: Update Envoy if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ envoy_releases.asset_by_tag[envoy_version][envoy_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ envoy_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ envoy_download_name }}"
+        dest: "{{ envoy_install_path }}"
+        extra_opts:
+        - --strip-components=3
+    when: envoy_version != local_envoy_version
+
+  - file:
+      src: "{{ envoy_install_path }}/envoy-gateway"
+      dest: "{{ user_dirs.bin }}/envoy-gateway"
+      state: link
