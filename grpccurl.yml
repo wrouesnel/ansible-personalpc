@@ -1,0 +1,62 @@
+# grpcurl
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest grpcurl release
+    set_fact:
+      grpcurl_releases: |
+        {{ query("github_releases", user="fullstorydev", repo="grpcurl", latest=1)[0] }}
+
+  - name: Get the current grpcurl version
+    set_fact:
+      grpcurl_version: "{{ grpcurl_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current grpcurl names
+    set_fact:
+      grpcurl_download_name: grpcurl_{{grpcurl_version}}_linux_x86_64.tar.gz
+      grpcurl_install_path: "{{ user_dirs.opt }}/grpcurl"
+
+  - name: Check current grpcurl version
+    block:
+    - file:
+        path: "{{ grpcurl_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ grpcurl_install_path }}/grpcurl"
+      register: grpcurl_exe
+    
+    - shell: "{{ grpcurl_install_path }}/grpcurl --version"
+      register: grpcurl_exe_version
+      when: grpcurl_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_grpcurl_version: >-
+          {{ grpcurl_exe_version.stderr | regex_search('grpcurl (\S*)', '\1') | first }}
+      when: grpcurl_exe.stat.exists
+    
+    - set_fact:
+        local_grpcurl_version: "0.0.0"
+      when: not grpcurl_exe.stat.exists
+
+  - name: Update grpcurl if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ grpcurl_releases.asset_by_tag['v' + grpcurl_version][grpcurl_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ grpcurl_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ grpcurl_download_name }}"
+        dest: "{{ grpcurl_install_path }}"
+        # extra_opts:
+        # - --strip-components=1
+    when: grpcurl_version != local_grpcurl_version
+
+  - file:
+      src: "{{ grpcurl_install_path }}/grpcurl"
+      dest: "{{ user_dirs.bin }}/grpcurl"
+      state: link
