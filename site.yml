@@ -46,6 +46,7 @@
 - import_playbook: restic.yml
 - import_playbook: bazelisk.yml
 - import_playbook: envoy.yml
+- import_playbook: grpccurl.yml
 
 - import_playbook: ca-certificates-tweaks.yml
 
