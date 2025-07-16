@@ -33,6 +33,7 @@
 - import_playbook: opensnitch.yml
 
 # Support CLI tools
+- import_playbook: atuin.yml
 - import_playbook: awscli.yml
 - import_playbook: kubectl.yml
 - import_playbook: stern.yml
@@ -47,6 +48,7 @@
 - import_playbook: bazelisk.yml
 - import_playbook: envoy.yml
 - import_playbook: grpccurl.yml
+- import_playbook: logcli.yml
 
 - import_playbook: ca-certificates-tweaks.yml
 
