@@ -1,0 +1,63 @@
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest logcli release
+    set_fact:
+      loki_releases: |
+        {{ query("github_releases", user="grafana", repo="loki", latest=1)[0] }}
+
+  - name: Get the current logcli version
+    set_fact:
+      loki_version: "{{ loki_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current loki names
+    set_fact:
+      logcli_download_name: logcli-linux-{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}.zip
+      logcli_install_path: "{{ user_dirs.opt }}/logcli"
+      logcli_exe_name: logcli-linux-{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}
+
+  - name: Check current loki version
+    block:
+    - file:
+        path: "{{ logcli_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ logcli_install_path }}/{{logcli_exe_name}}"
+      register: logcli_exe
+    
+    - shell: "{{ logcli_install_path }}/{{logcli_exe_name}} --version"
+      register: logcli_exe_version
+      when: logcli_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_logcli_version: >-
+          {{ logcli_exe_version.stderr | regex_search('logcli, version (\S*)', '\1') | first }}
+      when: logcli_exe.stat.exists
+    
+    - set_fact:
+        local_logcli_version: "0.0.0"
+      when: not logcli_exe.stat.exists
+
+  - name: Update loki if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ loki_releases.asset_by_tag['v' + loki_version][logcli_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ logcli_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ logcli_download_name }}"
+        dest: "{{ logcli_install_path }}"
+        # extra_opts:
+        # - --strip-components=1
+    when: loki_version != local_logcli_version
+  
+  - name: Ensure symlink
+    file:
+      src: "{{ logcli_install_path }}/{{logcli_exe_name}}"
+      dest: "{{ user_dirs.bin }}/logcli"
+      state: link
