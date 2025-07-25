@@ -1,0 +1,63 @@
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest dagger release
+    set_fact:
+      dagger_releases: |
+        {{ query("github_releases", user="dagger", repo="dagger", latest=1)[0] }}
+
+  - name: Get the current dagger version
+    set_fact:
+      dagger_version: "{{ dagger_releases.in_order[0]['tag_name'] }}"
+
+  - name: Get current dagger names
+    set_fact:
+      dagger_download_name: dagger_{{dagger_version}}_linux_{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}.tar.gz
+      dagger_install_path: "{{ user_dirs.opt }}/dagger"
+      dagger_exe_name: dagger
+
+  - name: Check current dagger version
+    block:
+    - file:
+        path: "{{ dagger_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ dagger_install_path }}/{{dagger_exe_name}}"
+      register: dagger_exe
+    
+    - shell: "{{ dagger_install_path }}/{{dagger_exe_name}} version"
+      register: dagger_exe_version
+      when: dagger_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_dagger_version: >-
+          {{ dagger_exe_version.stderr | regex_search('dagger (\S*)' '\1') | first }}
+      when: dagger_exe.stat.exists
+    
+    - set_fact:
+        local_dagger_version: "0.0.0"
+      when: not dagger_exe.stat.exists
+
+  - name: Update dagger if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ dagger_releases.asset_by_tag[dagger_version][dagger_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ dagger_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ dagger_download_name }}"
+        dest: "{{ dagger_install_path }}"
+        # extra_opts:
+        # - --strip-components=1
+    when: dagger_version != local_dagger_version
+  
+  - name: Ensure symlink
+    file:
+      src: "{{ dagger_install_path }}/{{dagger_exe_name}}"
+      dest: "{{ user_dirs.bin }}/dagger"
+      state: link

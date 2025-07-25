@@ -1,0 +1,58 @@
+# atuin: note - this doesn't install atuin properly because all the other stuff
+# it does is a little alarming.
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest atuin release
+    set_fact:
+      atuin_releases: |
+        {{ query("github_releases", user="atuinsh", repo="atuin", latest=1)[0] }}
+
+  - name: Get the current atuin version
+    set_fact:
+      atuin_version: "{{ atuin_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current atuin names
+    set_fact:
+      atuin_download_name: atuin-{{ansible_architecture}}-unknown-linux-gnu.tar.gz
+      atuin_install_path: "{{ user_dirs.opt }}/atuin"
+
+  - name: Check current atuin version
+    block:
+    - file:
+        path: "{{ atuin_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ atuin_install_path }}/atuin"
+      register: atuin_exe
+    
+    - shell: "{{ atuin_install_path }}/atuin --version"
+      register: atuin_exe_version
+      when: atuin_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_atuin_version: >-
+          {{ atuin_exe_version.stderr | regex_search('atuin (\S*)', '\1') | first }}
+      when: atuin_exe.stat.exists
+    
+    - set_fact:
+        local_atuin_version: "0.0.0"
+      when: not atuin_exe.stat.exists
+
+  - name: Update atuin if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ atuin_releases.asset_by_tag['v' + atuin_version][atuin_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ atuin_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ atuin_download_name }}"
+        dest: "{{ atuin_install_path }}"
+        extra_opts:
+        - --strip-components=1
+    when: atuin_version != local_atuin_version
