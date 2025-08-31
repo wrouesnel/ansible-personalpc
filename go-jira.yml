@@ -1,0 +1,59 @@
+# Netflix Skunkworks version
+# go-jira
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest gojira release
+    set_fact:
+      gojira_releases: |
+        {{ query("github_releases", user="go-jira", repo="jira", latest=1)[0] }}
+
+  - name: Get the current gojira version
+    set_fact:
+      gojira_version: "{{ gojira_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current gojira names
+    set_fact:
+      gojira_download_name: jira-linux-{{ansible_architecture|map_arch}}
+      gojira_install_path: "{{ user_dirs.opt }}/gojira"
+
+  - name: Check current gojira version
+    block:
+    - file:
+        path: "{{ gojira_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ gojira_install_path }}/{{gojira_download_name}}"
+      register: gojira_exe
+    
+    - shell: "{{ gojira_install_path }}/{{gojira_download_name}} version"
+      register: gojira_exe_version
+      when: gojira_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_gojira_version: >-
+          {{ gojira_exe_version.stderr | regex_search('(\S*)', '\1') | first }}
+      when: gojira_exe.stat.exists
+    
+    - set_fact:
+        local_gojira_version: "0.0.0"
+      when: not gojira_exe.stat.exists
+
+  - name: Update gojira if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ gojira_releases.asset_by_tag['v' + gojira_version][gojira_download_name].browser_download_url }}"
+        dest: "{{ gojira_install_path }}/{{ gojira_download_name }}"
+        mode: "0755"
+    when: gojira_version != local_gojira_version
+
+  - file:
+      src: "{{ gojira_install_path }}/{{gojira_download_name}}"
+      dest: "{{ user_dirs.bin }}/jira"
+      state: link
+      force: true
