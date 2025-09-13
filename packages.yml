@@ -114,6 +114,7 @@
       - git-gui
       - system-config-printer
       - gnome-calculator
+      - simplescreenrecorder
       state: latest
 
 # Personalization packages - the applications I use.
