@@ -20,7 +20,7 @@
     copy:
       content: |
         Package: firefox
-        Pin: release={{ ansible_distribution_release }}
+        Pin: release n={{ ansible_distribution_release }}
         Pin-Priority: 1
 
         Package: *
