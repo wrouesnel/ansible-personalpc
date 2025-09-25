@@ -79,7 +79,12 @@
         {% for item in registries %}
         [[registry]]
         location = "{{item}}"
-        {% if network.domain is defined %}
+        {% if item in registry_mirrors %}
+        {% for mirror in registry_mirrors[item].mirrors %}
+        [[registry.mirror]]
+        location = "{{mirror}}"
+        {% endfor %}
+        {% elif network.domain is defined %}
         [[registry.mirror]]
         location = "registry-mirror.{{network.domain}}/{{item}}"
         {% endif %}
