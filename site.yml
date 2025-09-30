@@ -30,7 +30,7 @@
 
 - import_playbook: libvirt.yml
 
-- import_playbook: opensnitch.yml
+#- import_playbook: opensnitch.yml
 
 # Support CLI tools
 - import_playbook: awscli.yml
