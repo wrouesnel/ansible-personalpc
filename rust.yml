@@ -5,7 +5,8 @@
   become: false
   vars:
     rustup_download_url: https://sh.rustup.rs
-    rustup_download_path: "{{ [ user_dirs.bin, 'rustup' ] | path_join }}"
+    rustup_download_path: "{{ [ user_dirs.bin, 'rustup.sh' ] | path_join }}"
+    installed_rustup: "{{ [ home_dir, '.cargo', 'bin', 'rustup' ] | path_join }}"
   tasks:
   - name: Download RustUp
     get_url:
@@ -13,11 +14,17 @@
       dest: "{{ rustup_download_path }}"
       mode: "0755"
 
-  - name: Update rust
-    command: rustup update
+  - name: Check if rustup is in the path
+    shell: command -v rustup
+    register: rustup_present
+    ignore_errors: true
+
+  - name: Install Rust if Needed
+    command: rustup.sh -y --profile=complete --default-toolchain=nightly
+    when: rustup_present.failed|default(False)
 
   - name: Ensure nightly
-    command: rustup toolchain install nightly
+    command: "{{installed_rustup}} -y toolchain install nightly"
 
   - name: Switch to nightly
-    command: rustup default nightly
+    command: "{{installed_rustup}} -y default nightly"
