@@ -44,7 +44,7 @@
     block:
     - name: Get the download URL for this platform
       get_url:
-        url: "{{ stern_releases.asset_by_tag[stern_version][stern_download_name].browser_download_url }}"
+        url: "{{ stern_releases.asset_by_tag['v' + stern_version][stern_download_name].browser_download_url }}"
         dest: "{{ user_dirs.downloads }}/{{ stern_download_name }}"
 
     - unarchive:
