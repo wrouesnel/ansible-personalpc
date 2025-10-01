@@ -23,5 +23,5 @@
 
   - name: Install package directly
     apt:
-      deb: "{{bazelisk_releases.asset_by_tag[bazelisk_version][bazelisk_download_name].browser_download_url}}"
+      deb: "{{bazelisk_releases.asset_by_tag['v' + bazelisk_version][bazelisk_download_name].browser_download_url}}"
     when: packages["bazelisk"][0]["version"]|default("") != bazelisk_version 

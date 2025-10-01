@@ -20,11 +20,11 @@
     ignore_errors: true
 
   - name: Install Rust if Needed
-    command: rustup.sh -y --profile=complete --default-toolchain=nightly
+    command: rustup.sh -y --profile=default --default-toolchain=nightly
     when: rustup_present.failed|default(False)
 
   - name: Ensure nightly
-    command: "{{installed_rustup}} -y toolchain install nightly"
+    command: "{{installed_rustup}} toolchain install nightly"
 
   - name: Switch to nightly
-    command: "{{installed_rustup}} -y default nightly"
+    command: "{{installed_rustup}} default nightly"
