@@ -1,0 +1,58 @@
+# Docker Distribution
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Distribution release
+    set_fact:
+      distribution_releases: |
+        {{ query("github_releases", user="distribution", repo="distribution", latest=1)[0] }}
+
+  - name: Get the current Distribution version
+    set_fact:
+      distribution_version: "{{ distribution_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Distribution names
+    set_fact:
+      distribution_download_name: registry_{{ distribution_version }}_linux_amd64.tar.gz
+      distribution_install_path: "{{ user_dirs.opt }}/distribution"
+
+  - name: Check current distribution version
+    block:
+    - file:
+        path: "{{ distribution_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ distribution_install_path }}/registry"
+      register: distribution_exe
+    
+    - shell: "{{ distribution_install_path }}/registry --version"
+      register: distribution_exe_version
+      when: distribution_exe.stat.exists
+
+    - set_fact:
+        local_distribution_version: >-
+          {{ distribution_exe_version.stdout | regex_search('\S+ (\S+)', '\1') | first }}
+      when: distribution_exe.stat.exists
+    
+    - set_fact:
+        local_distribution_version: "0.0.0"
+      when: not distribution_exe.stat.exists
+
+  - name: Update Distribution if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ distribution_releases.asset_by_tag['v' + distribution_version][distribution_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ distribution_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ distribution_download_name }}"
+        dest: "{{ distribution_install_path }}"
+
+    - file:
+        src: "{{ distribution_install_path }}/registry"
+        dest: "{{ user_dirs.bin }}/registry"
+        state: link
+    when: distribution_version != local_distribution_version
