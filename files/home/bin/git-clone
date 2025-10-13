@@ -45,6 +45,7 @@ def main():
             #print("Skipping {}".format(i))
             pass
     p.wait()
+    sys.stderr.write(clone_dir + "\n")
 
 if __name__ == "__main__":
     main()
