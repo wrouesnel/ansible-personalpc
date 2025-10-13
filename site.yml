@@ -51,6 +51,7 @@
 - import_playbook: atuin.yml
 - import_playbook: dagger.yml
 - import_playbook: go-jira.yml
+- import_playbook: caddy.yml
 
 - import_playbook: ca-certificates-tweaks.yml
 
