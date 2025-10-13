@@ -1,0 +1,61 @@
+# Caddy Fileserver
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Caddy release
+    set_fact:
+      caddy_releases: |
+        {{ query("github_releases", user="caddyserver", repo="caddy", latest=1)[0] }}
+
+  - name: Get the current Caddy version
+    set_fact:
+      caddy_version: "{{ caddy_releases.in_order[0]['tag_name'] }}"
+
+  - name: Get current Caddy names
+    set_fact:
+      caddy_download_name: caddy_{{caddy_version.lstrip("v")}}_linux_{{ ansible_architecture | map_arch }}.tar.gz
+      caddy_install_path: "{{ user_dirs.opt }}/caddy"
+
+  - name: Check current caddy version
+    block:
+    - file:
+        path: "{{ caddy_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ caddy_install_path }}/caddy"
+      register: caddy_exe
+    
+    - shell: "{{ caddy_install_path }}/caddy version"
+      register: caddy_exe_version
+      when: caddy_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_caddy_version: >-
+          {{ caddy_exe_version.stdout | regex_search('(\S*)', '\1') | first }}
+      when: caddy_exe.stat.exists
+    
+    - set_fact:
+        local_caddy_version: "v0.0.0"
+      when: not caddy_exe.stat.exists
+
+  - name: Update Caddy if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ caddy_releases.asset_by_tag[caddy_version][caddy_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ caddy_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ caddy_download_name }}"
+        dest: "{{ caddy_install_path }}"
+    when: caddy_version != local_caddy_version
+
+  - file:
+      src: "{{ caddy_install_path }}/caddy"
+      dest: "{{ user_dirs.bin }}/caddy"
+      state: link
+      force: true
