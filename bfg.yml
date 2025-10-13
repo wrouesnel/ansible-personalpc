@@ -1,0 +1,75 @@
+# bfg CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest bfg release
+    set_fact:
+      bfg_releases: |
+        {{ query("github_releases", user="rtyley", repo="bfg-repo-cleaner", latest=1)[0] }}
+
+  - name: Get the current bfg version
+    set_fact:
+      bfg_version: "{{ bfg_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current bfg names
+    set_fact:
+      bfg_download_url: https://repo1.maven.org/maven2/com/madgag/bfg/{{'v' + bfg_version}}/bfg-{{bfg_version}}.jar
+      bfg_download_name: bfg-{{bfg_version}}.jar
+      bfg_install_path: "{{ user_dirs.opt }}/bfg"
+
+  - name: Check current bfg version
+    block:
+    - file:
+        path: "{{ bfg_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ bfg_install_path }}/bfg"
+      register: bfg_exe
+    
+    - shell: "{{ bfg_install_path }}/bfg --version"
+      register: bfg_exe_version
+      when: bfg_exe.stat.exists
+
+    - set_fact:
+        local_bfg_version: >-
+          {{ bfg_exe_version.stdout | regex_search('bfg (\S*)', '\1') | first }}
+      when: bfg_exe.stat.exists
+    
+    - set_fact:
+        local_bfg_version: "0.0.0"
+      when: not bfg_exe.stat.exists
+
+  - name: Ensure the bfg launch script
+    copy:
+      content: |
+        #!/bin/bash
+        # See: https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+        # Note: you can't refactor this out: its at the top of every script so the scripts can find their includes.
+        SOURCE="${BASH_SOURCE[0]}"
+        while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+          DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+          SOURCE="$(readlink "$SOURCE")"
+          [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+        done
+        SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+        BFG_JAR="{{bfg_download_name}}"
+
+        exec java -jar "${SCRIPT_DIR}/${BFG_JAR}" "$@"
+      dest: "{{ bfg_install_path }}/bfg"
+      mode: "755"
+
+  - file:
+      src: "{{ bfg_install_path }}/bfg"
+      dest: "{{ user_dirs.bin }}/{{bfg_download_name}}"
+      state: link
+
+  - name: Update bfg if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ bfg_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ bfg_download_name }}"
+    when: bfg_version != local_bfg_version
