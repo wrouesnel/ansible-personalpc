@@ -6,6 +6,8 @@
   tasks:
   - name: Install user scripts
     copy:
-      dest: "{{ user_dirs.bin }}/git-clone"
-      src: files/home/bin/git-clone
+      dest: "{{ [ user_dirs.bin, item | basename ] | path_join }}"
+      src: "{{ item }}"
       mode: "0755"
+    with_fileglob:
+    - "files/home/bin/*"
