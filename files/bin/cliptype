@@ -1,0 +1,2 @@
+#!/bin/bash
+xclip -selection clipboard -out | xdotool selectwindow windowfocus type --clearmodifiers --delay 25 --window %@ --file -
