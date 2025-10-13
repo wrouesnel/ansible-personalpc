@@ -1,0 +1,50 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "furl",
+# ]
+# ///
+
+"""Clone git repos to the default directory structure"""
+
+import subprocess
+import sys
+import os
+from pathlib import Path
+import signal
+from furl import furl
+
+def main():
+    root_dir = Path("~/src").expanduser()
+
+    # Parse the clone URL
+    clone_url = furl(sys.argv[1])
+    clone_dir = root_dir / clone_url.host
+    for seg in clone_url.path.segments[:-1]:
+        clone_dir /= seg
+    clone_dir.mkdir(parents=True, exist_ok=True)
+
+    cmd = ["git","clone"]
+    cmd.extend(sys.argv[1:])
+
+    env = os.environ.copy()
+    p = subprocess.Popen(
+        cmd, env=env, cwd=clone_dir.as_posix(), stdin=sys.stdin, stderr=sys.stderr, stdout=sys.stdout
+    )
+    
+    # Attach all signals and forward them to the subprocess
+    def sighandler(signum, stack):
+        p.send_signal(signum)
+
+    for i in [x for x in dir(signal) if x.startswith("SIG")]:
+        try:
+            signum = getattr(signal, i)
+            signal.signal(signum, sighandler)
+        except (OSError, RuntimeError, ValueError) as m:  # OSError for Python3, RuntimeError for 2
+            #print("Skipping {}".format(i))
+            pass
+    p.wait()
+
+if __name__ == "__main__":
+    main()

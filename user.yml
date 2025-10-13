@@ -1,0 +1,11 @@
+---
+# User Home directory setup and maintenance
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Install user scripts
+    copy:
+      dest: "{{ user_dirs.bin }}/git-clone"
+      src: files/home/bin/git-clone
+      mode: "0755"
