@@ -14,9 +14,11 @@
 
   - name: Get current Envoy names
     set_fact:
+      egctl_download_name: egctl_{{envoy_version}}_linux_amd64.tar.gz
+      egctl_install_path: "{{ user_dirs.opt }}/egctl"
       envoy_download_name: envoy-gateway_{{envoy_version}}_linux_amd64.tar.gz
       envoy_install_path: "{{ user_dirs.opt }}/envoy-gateway"
-
+      
   - name: Check current envoy version
     block:
     - file:
@@ -59,4 +61,48 @@
   - file:
       src: "{{ envoy_install_path }}/envoy-gateway"
       dest: "{{ user_dirs.bin }}/envoy-gateway"
+      state: link
+
+  - name: Check current egctl version
+    block:
+    - file:
+        path: "{{ egctl_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ egctl_install_path }}/egctl"
+      register: egctl_exe
+    
+    - shell: "{{ egctl_install_path }}/egctl version"
+      register: egctl_exe_version
+      when: egctl_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_envoy_version: >-
+          {{ envoy_exe_version.stdout | regex_search('ENVOY_GATEWAY_VERSION: (\S*)', '\1') | first }}
+      when: egctl_exe.stat.exists
+    
+    - set_fact:
+        local_envoy_version: "0.0.0"
+      when: not egctl_exe.stat.exists
+
+  - name: Update Envoy if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ envoy_releases.asset_by_tag[envoy_version][egctl_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ egctl_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ egctl_download_name }}"
+        dest: "{{ egctl_install_path }}"
+        extra_opts:
+        - --strip-components=3
+    when: envoy_version != local_envoy_version
+
+  - file:
+      src: "{{ egctl_install_path }}/egctl"
+      dest: "{{ user_dirs.bin }}/egctl"
       state: link
