@@ -54,6 +54,8 @@
 - import_playbook: distribution.yml
 - import_playbook: caddy.yml
 - import_playbook: bfg.yml
+- import_playbook: egctl.yml
+- import_playbook: kubebuilder.yml
 
 
 - import_playbook: ca-certificates-tweaks.yml

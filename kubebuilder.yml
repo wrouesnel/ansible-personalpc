@@ -1,0 +1,55 @@
+# Kubebuilder CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Kubebuilder release
+    set_fact:
+      kubebuilder_releases: |
+        {{ query("github_releases", user="kubernetes-sigs", repo="kubebuilder", latest=1)[0] }}
+
+  - name: Get the current Kubebuilder version
+    set_fact:
+      kubebuilder_version: "{{ kubebuilder_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Kubebuilder names
+    set_fact:
+      kubebuilder_download_name: kubebuilder_linux_amd64
+      kubebuilder_install_path: "{{ user_dirs.opt }}/kubebuilder"
+
+  - name: Check current kubebuilder version
+    block:
+    - file:
+        path: "{{ kubebuilder_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ kubebuilder_install_path }}/kubebuilder"
+      register: kubebuilder_exe
+    
+    - shell: "{{ kubebuilder_install_path }}/kubebuilder --version"
+      register: kubebuilder_exe_version
+      when: kubebuilder_exe.stat.exists
+
+    - set_fact:
+        local_kubebuilder_version: >-
+          {{ kubebuilder_exe_version.stdout | regex_search('version: (\S*)', '\1') | first }}
+      when: kubebuilder_exe.stat.exists
+    
+    - set_fact:
+        local_kubebuilder_version: "0.0.0"
+      when: not kubebuilder_exe.stat.exists
+
+  - name: Update Kubebuilder if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ kubebuilder_releases.asset_by_tag['v' + kubebuilder_version][kubebuilder_download_name].browser_download_url }}"
+        dest: "{{ kubebuilder_install_path }}/kubebuilder"
+        mode: "0755"
+
+    - file:
+        src: "{{ kubebuilder_install_path }}/kubebuilder"
+        dest: "{{ user_dirs.bin }}/kubebuilder"
+        state: link
+    when: kubebuilder_version != local_kubebuilder_version
