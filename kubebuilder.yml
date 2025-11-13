@@ -27,13 +27,13 @@
         path: "{{ kubebuilder_install_path }}/kubebuilder"
       register: kubebuilder_exe
     
-    - shell: "{{ kubebuilder_install_path }}/kubebuilder --version"
+    - shell: "{{ kubebuilder_install_path }}/kubebuilder version"
       register: kubebuilder_exe_version
       when: kubebuilder_exe.stat.exists
 
     - set_fact:
         local_kubebuilder_version: >-
-          {{ kubebuilder_exe_version.stdout | regex_search('version: (\S*)', '\1') | first }}
+          {{ kubebuilder_exe_version.stdout | regex_search('KubeBuilderVersion:"(\S*)"', '\1') | first }}
       when: kubebuilder_exe.stat.exists
     
     - set_fact:
