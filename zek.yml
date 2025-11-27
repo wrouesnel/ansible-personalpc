@@ -1,0 +1,61 @@
+# Zek CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest zek release
+    set_fact:
+      zek_releases: |
+        {{ query("github_releases", user="miku", repo="zek", latest=1)[0] }}
+
+  - name: Get the current Kubebuilder version
+    set_fact:
+      zek_version: "{{ zek_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Kubebuilder names
+    set_fact:
+      zek_download_name: zek_Linux_{{ ansible_architecture }}.tar.gz
+      zek_install_path: "{{ user_dirs.opt }}/zek"
+
+  - name: Check current zek version
+    block:
+    - file:
+        path: "{{ zek_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ zek_install_path }}/zek"
+      register: zek_exe
+    
+    - shell: "{{ zek_install_path }}/zek --version"
+      register: zek_exe_version
+      when: zek_exe.stat.exists
+
+    - set_fact:
+        local_zek_version: >-
+          {{ zek_exe_version.stdout | regex_search('(\S*)', '\1') | first }}
+      when: zek_exe.stat.exists
+    
+    - set_fact:
+        local_zek_version: "0.0.0"
+      when: not zek_exe.stat.exists
+
+  - name: Update Zek if needed
+    block:
+    - name: Get the download URL for this platform
+      unarchive:
+        src: "{{ zek_releases.asset_by_tag['v' + zek_version][zek_download_name].browser_download_url }}"
+        dest: "{{ zek_install_path }}"
+        remote_src: yes
+
+    - file:
+        path: "{{ zek_install_path }}/zek"
+        mode: 0755
+    when: zek_version != local_zek_version
+  
+  - name: Ensure symlink
+    file:
+      src: "{{ zek_install_path }}/zek"
+      dest: "{{ user_dirs.bin }}/zek"
+      state: link
+  
