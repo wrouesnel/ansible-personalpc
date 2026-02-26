@@ -2,7 +2,7 @@
   connection: local
   become: true
   vars:
-    th_download_path: "{{user_dirs.downloads}}/thunderbird-128.5.2esr.tar.bz2"
+    th_download_path: "https://download-installer.cdn.mozilla.net/pub/thunderbird/releases/148.0/linux-x86_64/en-US/thunderbird-148.0.tar.xz"
   tasks:
   - unarchive:
       src: "{{th_download_path}}"

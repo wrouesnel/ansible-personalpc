@@ -12,6 +12,7 @@
 - import_playbook: yubico.yml
 
 - import_playbook: firefox.yml
+- import_playbook: thunderbird.yml
 - import_playbook: syncthing.yml
 - import_playbook: vscode.yml
 - import_playbook: podman.yml
