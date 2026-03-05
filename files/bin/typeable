@@ -1,0 +1,89 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "reedsolo",
+# ]
+# ///
+
+# Script to split text up into a typeable format with quality of life helpers
+
+import sys
+import itertools
+import argparse
+import zlib
+import string
+import binascii
+from collections import defaultdict
+
+from reedsolo import RSCodec, ReedSolomonError
+rsc = RSCodec(2)
+
+parser = argparse.ArgumentParser(description="Manually typed text utility")
+parser.add_argument("--decode", "-d", action="store_true", help="Decode typed text")
+
+def main(args):
+    args = parser.parse_args()
+
+    # Read a line of text
+    txt = sys.stdin.readline().strip()
+
+    # Convert it into 4 character batch
+    batches = [ "".join(batch) for batch in itertools.batched(txt, n=4) ]
+
+    # Convert the text into a set of lines
+    lines = [ items for items in itertools.batched(batches, n=13) ]
+
+    num_columns = max( len(items) for items in lines )
+    num_lines = len(lines)
+
+    # Calculate line checksums
+    line_sums = {}
+    for idx, line in enumerate(lines):
+        #line_sums[idx] = zlib.crc32("".join([ "".join(column) for column in line ]).encode())
+        byte_line = bytearray("".join([ "".join(column) for column in line ]).encode())
+        line_sums[idx] = binascii.hexlify(rsc.encode(byte_line)[len(byte_line):]).decode()
+            
+
+    # Calculate column checksums
+    cols = defaultdict(list)
+    col_sums = {}
+    for line in lines:
+        for idx, col in enumerate(line):
+            cols[idx].append("".join(col))
+
+    for col_idx in range(num_columns):
+        byte_col = bytearray("".join(cols[col_idx]).encode())
+        col_sums[col_idx] = binascii.hexlify(rsc.encode(byte_col)[len(byte_col):]).decode()
+
+    # print the column header
+    sys.stdout.write("      ")
+    for idx in range(num_columns):
+        sys.stdout.write(f"{string.ascii_uppercase[idx]:<4} ")
+    sys.stdout.write("  ")
+    sys.stdout.write(f"{'#':<4}  ")
+    sys.stdout.write("\n")
+
+    for line_no, line in enumerate(lines):
+        sys.stdout.write(f"{line_no:>4}  ")
+        for col_idx, column in enumerate(line):
+            sys.stdout.write(f"{column:<4}")
+            sys.stdout.write(" ")
+        for _ in range(col_idx, num_columns-1):
+            sys.stdout.write("    ")
+            sys.stdout.write(" ")
+                
+        sys.stdout.write(f"| {line_sums[line_no]}")
+        sys.stdout.write("\n")
+    
+    sys.stdout.write(f"{' ':>4}  ")
+    for col_idx in range(len(col_sums)):
+        sys.stdout.write("---- ")
+    sys.stdout.write("\n")
+    sys.stdout.write(f"{'#':>4}  ")
+    for col_idx in range(len(col_sums)):
+        sys.stdout.write(f"{col_sums[col_idx]:<4}")
+        sys.stdout.write(" ")
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
