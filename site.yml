@@ -57,6 +57,7 @@
 - import_playbook: bfg.yml
 - import_playbook: egctl.yml
 - import_playbook: kubebuilder.yml
+- import_playbook: olm.yml
 - import_playbook: zek.yml
 
 
