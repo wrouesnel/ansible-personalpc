@@ -1,0 +1,55 @@
+# Operator Lifecycle Manager CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest OLM release
+    set_fact:
+      olm_releases: |
+        {{ query("github_releases", user="operator-framework", repo="operator-sdk", latest=1)[0] }}
+
+  - name: Get the current OLM version
+    set_fact:
+      olm_version: "{{ olm_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current OLM names
+    set_fact:
+      olm_download_name: operator-sdk_{{ansible_facts.system|lower}}_{{ansible_facts.userspace_architecture|map_arch}}
+      olm_install_path: "{{ user_dirs.opt }}/operator-sdk"
+
+  - name: Check current olm version
+    block:
+    - file:
+        path: "{{ olm_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ olm_install_path }}/{{olm_download_name}}"
+      register: olm_exe
+    
+    - shell: "{{ olm_install_path }}/{{olm_download_name}} version"
+      register: olm_exe_version
+      when: olm_exe.stat.exists
+
+    - set_fact:
+        local_olm_version: >-
+          {{ olm_exe_version.stdout | regex_search('operator-sdk version: "(\S*)"', '\1') | first }}
+      when: olm_exe.stat.exists
+    
+    - set_fact:
+        local_olm_version: "0.0.0"
+      when: not olm_exe.stat.exists
+
+  - name: Update OLM if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ olm_releases.asset_by_tag['v' + olm_version][olm_download_name].browser_download_url }}"
+        dest: "{{ olm_install_path }}/{{olm_download_name}}"
+        mode: "0755"
+
+    - file:
+        src: "{{ olm_install_path }}/{{olm_download_name}}"
+        dest: "{{ user_dirs.bin }}/operator-sdk"
+        state: link
+    when: olm_version != local_olm_version
