@@ -1,0 +1,61 @@
+# OPA Gatekeeper CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest gator release
+    set_fact:
+      gator_releases: |
+        {{ query("github_releases", user="open-policy-agent", repo="gatekeeper", latest=1)[0] }}
+
+  - name: Get the current gator version
+    set_fact:
+      gator_version: "{{ gator_releases.in_order[0]['tag_name'] }}"
+
+  - name: Get current gator names
+    set_fact:
+      gator_download_name: gator-{{gator_version}}-{{ansible_facts.system|lower}}-{{ansible_facts.userspace_architecture|map_arch}}.tar.gz
+      gator_install_path: "{{ user_dirs.opt }}/gator"
+
+  - name: Check current gator version
+    block:
+    - file:
+        path: "{{ gator_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ gator_install_path }}/{{gator_download_name}}"
+      register: gator_exe
+    
+    - shell: "{{ gator_install_path }}/{{gator_download_name}} version"
+      register: gator_exe_version
+      when: gator_exe.stat.exists
+
+    - set_fact:
+        local_gator_version: >-
+          {{ gator_exe_version.stdout | regex_search('gator version "(\S*)"', '\1') | first }}
+      when: gator_exe.stat.exists
+    
+    - set_fact:
+        local_gator_version: "0.0.0"
+      when: not gator_exe.stat.exists
+
+  - name: Update gator if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ gator_releases.asset_by_tag[gator_version][gator_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ gator_download_name }}"
+        mode: "0755"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ gator_download_name }}"
+        dest: "{{ gator_install_path }}"
+        # extra_opts:
+        # - --strip-components=1
+
+    - file:
+        src: "{{ gator_install_path }}/gator"
+        dest: "{{ user_dirs.bin }}/gator"
+        state: link
+    when: gator_version != local_gator_version
