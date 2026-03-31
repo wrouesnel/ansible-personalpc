@@ -4,7 +4,7 @@
   connection: local
   tasks:
   - name: Collect dconf configuration
-    shell: dconf dump / > {{files_dir}}/dconf.settings
+    shell: dconf dump / > {{persistent_user_config.linux.shared}}/dconf.settings
 
   - name: Collect local gtk-3.0 config
     copy:
