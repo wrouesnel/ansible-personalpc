@@ -28,6 +28,6 @@ if ! sudo apt install -u python3-pip; then
   fatal "python3-pip installation failed"
 fi
 
-if ! pip install uv ; then
+if ! pip install --break-system-packages uv ; then
   fatal "Failed to install uv"
 fi
