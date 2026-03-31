@@ -1,0 +1,17 @@
+---
+# KeePass Menu Setup
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - copy:
+      content: |
+        [Desktop Entry]
+        Name=KeePass
+        Exec={{home_dir}}/opt/keepass/keepass.sh %f
+        Comment=KeePass Password Manager
+        Terminal=false
+        Icon={{home_dir}}/opt/keepass/KeePass_icon.svg
+        Type=Application
+      dest: {{ home_dir }}/.local/share/applications/keepass.desktop
+
