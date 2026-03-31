@@ -53,10 +53,10 @@
 - import_playbook: atuin.yml
 - import_playbook: dagger.yml
 - import_playbook: go-jira.yml
-- import_playbook: distribution.yml
+- import_playbook: docker-distribution.yml
 - import_playbook: caddy.yml
 - import_playbook: bfg.yml
-- import_playbook: egctl.yml
+#- import_playbook: egctl.yml
 - import_playbook: kubebuilder.yml
 - import_playbook: olm.yml
 - import_playbook: zek.yml
