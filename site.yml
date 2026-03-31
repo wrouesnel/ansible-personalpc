@@ -9,6 +9,7 @@
 - import_playbook: udev.yml
 
 - import_playbook: packages.yml
+- import_playbook: keepass.yml
 - import_playbook: yubico.yml
 
 - import_playbook: firefox.yml
