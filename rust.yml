@@ -25,7 +25,7 @@
     when: rustup_present.st.exists|default(False)
 
   - name: Ensure nightly
-    command: "{{installed_rustup}} toolchain install nightly"
+    command: "rustup toolchain install nightly"
 
   - name: Switch to nightly
-    command: "{{installed_rustup}} default nightly"
+    command: "rustup default nightly"

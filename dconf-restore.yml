@@ -2,4 +2,4 @@
   connection: local
   tasks:
   - name: Restoring dconf settings
-    shell: dconf load / < {{files_dir}}/dconf.settings
+    shell: dconf load / < {{persistent_user_config.linux.shared}}/dconf.settings

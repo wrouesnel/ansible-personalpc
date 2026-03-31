@@ -14,7 +14,7 @@
 
   - name: Get current Podman Desktop names
     set_fact:
-      podman_desktop_download_name: podman-desktop-{{ podman_desktop_version }}.tar.gz
+      podman_desktop_download_name: podman-desktop-{{ podman_desktop_version }}-x64.tar.gz
       podman_desktop_install_path: "/opt/podman-desktop"
 
   - name: Check current podman_desktop version
