@@ -16,6 +16,6 @@ proxydetect() {
 	fi
 }
 
-proxydetect "${proxy:-127.0.0.1}"
+proxydetect "${DOMAIN:-127.0.0.1}"
 
 exit 0
