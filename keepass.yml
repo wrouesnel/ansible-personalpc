@@ -13,5 +13,5 @@
         Terminal=false
         Icon={{home_dir}}/opt/keepass/KeePass_icon.svg
         Type=Application
-      dest: {{ home_dir }}/.local/share/applications/keepass.desktop
+      dest: "{{ home_dir }}/.local/share/applications/keepass.desktop"
 
