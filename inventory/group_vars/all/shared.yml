@@ -7,6 +7,14 @@ user_dirs:
   downloads: "{{ home_dir }}/Downloads"
   bin: "{{ home_dir }}/bin"
 
+persistent_user_config: 
+  linux:
+    shared: "{{ home_dir }}/config/linux/shared"
+  windows:
+    shared: "{{ home_dir }}/config/windows/shared"
+  shared:
+    "{{ home_dir }}/config/shared"
+
 apt_keyring_dir: /etc/apt/keyrings
 
 network:
