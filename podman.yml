@@ -79,7 +79,7 @@
         {% for item in registries %}
         [[registry]]
         location = "{{item}}"
-        {% if item in registry_mirrors %}
+        {% if item in registry_mirrors|default([]) %}
         {% for mirror in registry_mirrors[item].mirrors %}
         [[registry.mirror]]
         location = "{{mirror}}"
