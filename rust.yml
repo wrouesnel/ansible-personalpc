@@ -15,13 +15,14 @@
       mode: "0755"
 
   - name: Check if rustup is in the path
-    shell: command -v rustup
+    stat:
+      path: "{{installed_rustup}}"
     register: rustup_present
     ignore_errors: true
 
   - name: Install Rust if Needed
     command: rustup.sh -y --profile=default --default-toolchain=nightly
-    when: rustup_present.failed|default(False)
+    when: rustup_present.st.exists|default(False)
 
   - name: Ensure nightly
     command: "{{installed_rustup}} toolchain install nightly"
