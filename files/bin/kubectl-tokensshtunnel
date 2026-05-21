@@ -1,0 +1,164 @@
+#!/bin/bash
+# # kubectl-tokensshtunnel
+
+# ## Installation
+
+# To install it you just need to copy `kubectl-tokensshtunnel` anywhere within your `PATH` with execution permissions.
+
+# ## Configuration
+
+# The script supports the following command-line options:
+
+# - `-c <ssh command>`: Set the SSH command to use. This is the command used to establish an SSH connection to the remote server.
+# - `-k <kube config>` (optional): Set the remote kube config file location. Default: `/etc/rancher/k3s/k3s.yaml`.
+# - `-L <ssh tunnel>` (optional): Set the SSH tunnel configuration. The format is `[<local_bind>:]<local_port>:<remote_host>:<remote_port>`. Use this option to forward a local port to the remote Kubernetes API server.
+# - `-s` (optional): Add `sudo` to the SSH command. Use this option if `sudo` access is required for the SSH connection.
+# - `-t <tmp pattern>` (optional): Set the location to store the cached credentials. This is the location where the generated Kubernetes config file will be stored.
+# - `-d <tunnel duration>` (optional): Set the duration for which the SSH tunnel will be available. Specify the duration in a format compatible with the `date` command. Default: 1 hour.
+
+# ## Kubeconfig
+
+# To configure your kubeconfig file, add the following configuration to the users section, update accordingly to your needs:
+
+# ```
+# - name: sshtunnel
+#   user:
+#     exec:
+#       apiVersion: client.authentication.k8s.io/v1beta1
+#       args:
+#       - tokensshtunnel
+#       - -c
+#       - ssh bastion
+#       - -s
+#       - -L
+#       - 127.0.0.1:7443:127.0.0.1:6443
+#       - -T
+#       - /etc/rancher/k3s/k3s.yaml
+#       command: kubectl
+#       env: null
+#       interactiveMode: IfAvailable
+#       provideClusterInfo: false
+# ```
+
+
+load_linux() {
+    EXPIRE_TOKEN="$(date -u --date="+1 hour" +"%Y-%m-%dT%H:%M:%SZ")"
+}
+
+load_mac() {
+    EXPIRE_TOKEN="$(date -u -v+1H -j -f "%Y-%m-%dT%H:%M:%SZ" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" +"%Y-%m-%dT%H:%M:%SZ")"
+}
+
+MAX_DURATION="3600"
+TMP_CRED="$HOME/.ktst_cache"
+REMOTE_KUBE_CONFIG="/etc/rancher/k3s/k3s.yaml"
+SSH_TUNNEL=""
+
+while getopts 'd:t:c:k:L:s' OPT; do
+  case $OPT in
+    c)  SSH_COMMAND=$OPTARG;;
+    k)  REMOTE_KUBE_CONFIG=$OPTARG;;
+    L)  SSH_TUNNEL=$OPTARG;;
+    s)  ADD_SUDO="true";;
+    t)  TMP_CRED=$OPTARG;;
+    d)  MAX_DURATION=$OPTARG;;
+    h)  JELP="yes";;
+    *)  JELP="yes";;
+  esac
+done
+
+shift $(($OPTIND - 1))
+
+HELP="
+    usage: $0 -c <ssh command>
+
+    Options:
+    -c <ssh command>      Set the SSH command to use.
+    -k <kube config>      Set the remote kube config file (default: /etc/rancher/k3s/k3s.yaml).
+    -L <ssh tunnel>       Set the SSH tunnel configuration (format: [<local_bind>:]<local_port>:<remote_host>:<remote_port>).
+    -s                    Add 'sudo' to the SSH command.
+    -t <tmp pattern>      Set the location to store the cached credentials.
+    -d <tunnel duration>  Set the duration for which the tunnel will be available.
+    -h                    Show this help message.
+"
+
+if [ "$JELP" = "yes" ] || [ -z "$SSH_COMMAND" ]; then
+  echo "$HELP"
+  exit 1
+fi
+
+if [ $TMP_CRED == "/" ] || [ -d $TMP_CRED ];
+then
+    echo "WTF: TMP_CRED: $TMP_CRED"
+    exit 1
+fi
+
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+case "${OS}" in
+    linux*)     load_linux;;
+    darwin*)    load_mac;;
+    *)          echo "error retrieving arch"; exit 1;;
+esac
+
+if [ -z "$ADD_SUDO" ];
+then
+    SUDO_CMD=" "
+else
+    SUDO_CMD="sudo"
+fi
+
+# setup tunnel
+
+if [ ! -z "${SSH_TUNNEL}" ];
+then
+    # 7443:127.0.0.1:6443
+    # 127.0.0.1:7443:127.0.0.1:6443
+    SEPARATORS=$(echo "${SSH_TUNNEL}" | sed 's/:/:\n/g' | wc -l)
+
+    if [ $SEPARATORS -gt 3 ];
+    then
+        LISTEN=$(echo "${SSH_TUNNEL}" | rev | cut -f3- -d: | rev | sed 's/:/ /')
+
+        nc -w 1 -z $LISTEN >/dev/null 2>/dev/null
+
+        if [ $? -ne 0 ];
+        then
+            # spin-up tunnel
+            nohup $SSH_COMMAND -L "${SSH_TUNNEL}" "sleep ${MAX_DURATION}" >/dev/null >/dev/null 2>&1 &
+            
+            # refresh credentials
+            if [ -f $TMP_CRED ];
+            then
+                rm $TMP_CRED
+            fi
+        fi
+
+        if [ -f $TMP_CRED ];
+        then
+            cat $TMP_CRED
+            exit 0
+        fi 
+    else
+        echo "Error parsing SSH TUNNEL: $SSH_TUNNEL"
+        exit 1
+    fi
+fi
+
+GET_KUBECONFIG_CMD="$SSH_COMMAND \"$SUDO_CMD cat ${REMOTE_KUBE_CONFIG}\""
+
+CCD_DATA="$(sh -c "$GET_KUBECONFIG_CMD" 2>/dev/null | grep client-certificate-data | awk '{ print $2 }' | base64 -d | awk '{ printf "%s\\n",$0 }')"
+CKD_DATA="$(sh -c "$GET_KUBECONFIG_CMD" 2>/dev/null | grep client-key-data | awk '{ print $2 }' | base64 -d | awk '{ printf "%s\\n",$0 }')"
+
+echo "{
+    \"kind\":\"ExecCredential\",
+    \"apiVersion\":\"client.authentication.k8s.io/v1beta1\",
+    \"spec\":{
+        \"interactive\":false
+        },
+    \"status\":{
+        \"expirationTimestamp\":\"${EXPIRE_TOKEN}\",
+        \"clientCertificateData\":\"${CCD_DATA}\",
+        \"clientKeyData\":\"${CKD_DATA}\"
+        }
+    }" | tee $TMP_CRED
+

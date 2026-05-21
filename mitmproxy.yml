@@ -1,0 +1,69 @@
+# Mitmproxy
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest mitmproxy release
+    set_fact:
+      mitmproxy_releases: |
+        {{ query("github_releases", user="mitmproxy", repo="mitmproxy", latest=1)[0] }}
+
+  - name: Get the current mitmproxy version
+    set_fact:
+      mitmproxy_version: "{{ mitmproxy_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: get download name
+    set_fact:
+      mitmproxy_download: mitmproxy-{{mitmproxy_version}}-{{ansible_system|lower}}-{{ansible_architecture}}.tar.gz
+      mitmproxy_install_path: "{{ [user_dirs.opt, 'mitmproxy'] | path_join }}"
+  - name: make installation direcotry
+    file:
+      path: "{{ mitmproxy_install_path }}"
+      state: directory
+
+  - name: Check current mitmproxy version
+    block:
+    - file:
+        path: "{{ mitmproxy_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ mitmproxy_install_path }}/mitmproxy"
+      register: mitmproxy_exe
+    
+    - shell: "{{ mitmproxy_install_path }}/mitmproxy --version"
+      register: mitmproxy_exe_version
+      when: mitmproxy_exe.stat.exists
+
+    - set_fact:
+        local_mitmproxy_version: >-
+          {{ mitmproxy_exe_version.stdout_lines| first | regex_search('Mitmproxy: (.*) (.*)', '\1') }}
+      when: mitmproxy_exe.stat.exists
+
+    - set_fact:
+        local_mitmproxy_version: "0.0.0"
+      when: not mitmproxy_exe.stat.exists
+
+  - name: Update mitmproxy if needed
+    block:
+    - name: Download mitmproxy
+      get_url:
+        url: "https://downloads.mitmproxy.org/{{mitmproxy_version}}/{{mitmproxy_download}}"
+        dest: "{{ user_dirs.downloads }}/{{mitmproxy_download}}"
+        mode: "0755"
+
+    - name: Update mitmproxy if needed
+      block:
+      - unarchive:
+          src: "{{ user_dirs.downloads }}/{{ mitmproxy_download }}"
+          dest: "{{ mitmproxy_install_path }}"
+    when: mitmproxy_version != local_mitmproxy_version
+
+  - file:
+      src: "{{ mitmproxy_install_path }}/{{item}}"
+      dest: "{{ user_dirs.bin }}/{{item}}"
+      state: link
+    loop:
+    - mitmproxy
+    - mitmweb
+    - mitmdump
