@@ -8,6 +8,7 @@
     package:
       name:
       - apt-transport-https
+      - apt-file
       - ca-certificates
       - ca-certificates-java
       - dnsutils
