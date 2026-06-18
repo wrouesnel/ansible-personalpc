@@ -25,3 +25,31 @@
     package:
       name:
       - tofu
+
+# Also include Hashicorp terraform
+- hosts: localhost
+  connection: local
+  vars:
+    terraform_version: "1.15.6"
+  tasks:
+  - name: Download terraform binary
+    get_url:
+      url: https://releases.hashicorp.com/terraform/{{terraform_version}}/terraform_{{terraform_version}}_{{ansible_system|lower}}_{{ansible_architecture|map_arch}}.zip
+      dest: "{{user_dirs.downloads}}/terraform_{{terraform_version}}_{{ansible_system|lower}}_{{ansible_architecture|map_arch}}.zip"  
+  
+  - name: Create a directory for terraform
+    file:
+      path: "{{ [user_dirs.opt, 'terraform'] | path_join }}"
+      state: directory
+
+  - name: extract archive
+    unarchive:
+      src: "{{user_dirs.downloads}}/terraform_{{terraform_version}}_{{ansible_system|lower}}_{{ansible_architecture|map_arch}}.zip"
+      dest: "{{ [user_dirs.opt, 'terraform'] | path_join }}"
+
+  - name: setup link
+    file:
+      src: "{{ [user_dirs.opt, 'terraform', 'terraform'] | path_join }}"
+      dest: "{{ [user_dirs.bin, 'terraform'] | path_join }}"
+      state: link
+      force: true
