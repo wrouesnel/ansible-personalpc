@@ -1,0 +1,57 @@
+# LocalStack CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Localstack release
+    set_fact:
+      localstack_releases: |
+        {{ query("github_releases", user="localstack", repo="localstack-cli", latest=1)[0] }}
+
+  - name: Get the current Localstack version
+    set_fact:
+      localstack_version: "{{ localstack_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Localstack names
+    set_fact:
+      localstack_download_name: localstack-cli-{{localstack_version}}-{{ansible_system|lower}}-{{ansible_architecture|map_arch}}.tar.gz 
+      localstack_install_path: "{{ user_dirs.opt }}/localstack"
+
+  - name: Check current localstack version
+    block:
+    - file:
+        path: "{{ localstack_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ localstack_install_path }}/localstack"
+      register: localstack_exe
+    
+    - shell: "{{ localstack_install_path }}/localstack --version"
+      register: localstack_exe_version
+      when: localstack_exe.stat.exists
+
+    - set_fact:
+        local_localstack_version: >-
+          {{ localstack_exe_version.stdout | regex_search('LocalStack CLI "(\S*)"', '\1') | first }}
+      when: localstack_exe.stat.exists
+    
+    - set_fact:
+        local_localstack_version: "0.0.0"
+      when: not localstack_exe.stat.exists
+
+  - name: Update Localstack if needed
+    block:
+    - name: Get the download URL for this platform
+      unarchive:
+        src: "{{ localstack_releases.asset_by_tag['v' + localstack_version][localstack_download_name].browser_download_url }}"
+        dest: "{{ localstack_install_path }}"
+        remote_src: true
+        extra_opts:
+        - --strip-components=1
+
+    - file:
+        src: "{{ localstack_install_path }}/localstack"
+        dest: "{{ user_dirs.bin }}/localstack"
+        state: link
+    when: localstack_version != local_localstack_version

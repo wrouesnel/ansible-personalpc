@@ -60,7 +60,8 @@
 - import_playbook: kubebuilder.yml
 - import_playbook: olm.yml
 - import_playbook: zek.yml
-- import_playbook: mitmproxy
+- import_playbook: mitmproxy.yml
+- import_playbook: localstakc.yml
 
 - import_playbook: ca-certificates-tweaks.yml
 
