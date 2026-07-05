@@ -1,29 +1,71 @@
 - hosts: localhost
   connection: local
   become: true
-  vars:
-    th_download_path: "https://download-installer.cdn.mozilla.net/pub/thunderbird/releases/148.0/linux-x86_64/en-US/thunderbird-148.0.tar.xz"
   tasks:
-  - unarchive:
-      src: "{{th_download_path}}"
-      dest: /opt/
-      remote_src: true
-      creates: /opt/thunderbird/thunderbird
+  - name: Get the current Helm version
+    set_fact:
+      thunderbird_version: "152.0"
 
-  - file:
-      path: /usr/local/share/applications
-      state: directory
-      owner: root
-      group: root
-      mode: "0755"
+  - name: Get current names
+    set_fact:
+      #helm_download_name: helm-{{ helm_version }}-linux-amd64.tar.gz
+      thunderbird_install_path: "/opt/thunderbird"
 
-  - copy:
-      content: |
-        [Desktop Entry] 
-        Name=Thunderbird 
-        Exec=/opt/thunderbird/thunderbird 
-        Comment=Mail and Calendar Client
-        Terminal=false
-        Icon=/opt/thunderbird/chrome/icons/default/default256.png
-        Type=Application
-      dest: /usr/local/share/applications/thunderbird.desktop
+  - name: Check current thunderbird version
+    block:
+    - file:
+        path: "{{ thunderbird_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ thunderbird_install_path }}/thunderbird"
+      register: thunderbird_exe
+    
+    - shell: "{{ thunderbird_install_path }}/thunderbird -version"
+      register: thunderbird_exe_version
+      when: thunderbird_exe.stat.exists
+
+    - set_fact:
+        local_thunderbird_version: >-
+          {{ thunderbird_exe_version.stdout | regex_search('Mozilla Thunderbird (.*?)', '\1') }}
+      when: thunderbird_exe.stat.exists
+    
+    - set_fact:
+        local_thunderbird_version: "0.0.0"
+      when: not thunderbird_exe.stat.exists
+
+  - name: Update Thunderbird
+    block:
+    - shell: mv /opt/thunderbird /opt/thunderbird.old
+
+    - unarchive:
+        src: "https://download-installer.cdn.mozilla.net/pub/thunderbird/releases/{{thunderbird_version}}/linux-x86_64/en-US/thunderbird-{{thunderbird_version}}.tar.xz"
+        dest: /opt/
+        remote_src: true
+        creates: /opt/thunderbird/thunderbird
+
+    - file:
+        path: /usr/local/share/applications
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - copy:
+        content: |
+          [Desktop Entry] 
+          Name=Thunderbird 
+          Exec=/opt/thunderbird/thunderbird 
+          Comment=Mail and Calendar Client
+          Terminal=false
+          Icon=/opt/thunderbird/chrome/icons/default/default256.png
+          Type=Application
+        dest: /usr/local/share/applications/thunderbird.desktop
+    rescue:
+    # Restore the old version
+    - shell: mv /opt/thunderbird /opt/thunderbird.new
+    - shell: mv /opt/thunderbird.old /opt/thunderbird
+    - file:
+        path: /opt/thunderbird.new
+        state: absent
+    when: thunderbird_version != local_thunderbird_version
