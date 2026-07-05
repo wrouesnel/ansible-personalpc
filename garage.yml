@@ -1,0 +1,58 @@
+# LocalStack CLI
+- hosts: localhost
+  connection: local
+  become: false
+  vars:
+    garage_version: v2.3.0
+  tasks:
+  # - name: Get the latest Garage release
+  #   set_fact:
+  #     garage_releases: |
+  #       {{ query("github_releases", user="garage", repo="garage-cli", latest=1)[0] }}
+
+  # - name: Get the current Garage version
+  #   set_fact:
+  #     garage_version: "{{ garage_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Garage names
+    set_fact:
+      garage_download_name: garage
+      garage_install_path: "{{ user_dirs.opt }}/garage"
+
+  - name: Check current garage version
+    block:
+    - file:
+        path: "{{ garage_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ garage_install_path }}/garage"
+      register: garage_exe
+    
+    - shell: "{{ garage_install_path }}/garage --version"
+      register: garage_exe_version
+      when: garage_exe.stat.exists
+
+    - set_fact:
+        local_garage_version: >-
+          {{ garage_exe_version.stdout | regex_search('garage (\S*)', '\1') | first }}
+      when: garage_exe.stat.exists
+    
+    - set_fact:
+        local_garage_version: "0.0.0"
+      when: not garage_exe.stat.exists
+
+  - name: Update Garage if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        #src: "{{ garage_releases.asset_by_tag['v' + garage_version][garage_download_name].browser_download_url }}"
+        url: https://garagehq.deuxfleurs.fr/_releases/{{garage_version}}/{{ansible_architecture}}-unknown-{{ansible_system|lower}}-musl/garage
+        dest: "{{ garage_install_path }}/garage"
+        mode: "0755"
+
+    - file:
+        src: "{{ garage_install_path }}/garage"
+        dest: "{{ user_dirs.bin }}/garage"
+        state: link
+    when: garage_version != local_garage_version
