@@ -4,7 +4,7 @@
   tasks:
   - name: Get the current Helm version
     set_fact:
-      thunderbird_version: "152.0"
+      thunderbird_version: "153.0b5"
 
   - name: Get current names
     set_fact:
