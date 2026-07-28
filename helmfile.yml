@@ -1,0 +1,58 @@
+# Kubernetes CLI
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest Helmfile release
+    set_fact:
+      helmfile_releases: |
+        {{ query("github_releases", user="helmfile", repo="helmfile", latest=1)[0] }}
+
+  - name: Get the current Helmfile version
+    set_fact:
+      helmfile_version: "{{ helmfile_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current Helmfile names
+    set_fact:
+      helmfile_download_name: helmfile_{{ helmfile_version }}_linux_amd64.tar.gz
+      helmfile_install_path: "{{ user_dirs.opt }}/helmfile"
+
+  - name: Check current helmfile version
+    block:
+    - file:
+        path: "{{ helmfile_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ helmfile_install_path }}/helmfile"
+      register: helmfile_exe
+    
+    - shell: "{{ helmfile_install_path }}/helmfile --version"
+      register: helmfile_exe_version
+      when: helmfile_exe.stat.exists
+
+    - set_fact:
+        local_helmfile_version: >-
+          {{ helmfile_exe_version.stdout | regex_search('helmfile version (.*?)', '\1') }}
+      when: helmfile_exe.stat.exists
+    
+    - set_fact:
+        local_helmfile_version: "0.0.0"
+      when: not helmfile_exe.stat.exists
+
+  - name: Update Helmfile if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ helmfile_releases.asset_by_tag['v' + helmfile_version][helmfile_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ helmfile_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ helmfile_download_name }}"
+        dest: "{{ helmfile_install_path }}"
+
+    - file:
+        src: "{{ helmfile_install_path }}/helmfile"
+        dest: "{{ user_dirs.bin }}/helmfile"
+        state: link
+    when: helmfile_version != local_helmfile_version
