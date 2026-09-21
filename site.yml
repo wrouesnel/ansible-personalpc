@@ -15,6 +15,7 @@
 - import_playbook: firefox.yml
 - import_playbook: thunderbird.yml
 - import_playbook: syncthing.yml
+  when: not nonpersonal_pc|default(False)
 - import_playbook: vscode.yml
 - import_playbook: podman.yml
 - import_playbook: docker-compose.yml
