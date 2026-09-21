@@ -8,6 +8,11 @@
     rustup_download_path: "{{ [ user_dirs.bin, 'rustup.sh' ] | path_join }}"
     installed_rustup: "{{ [ home_dir, '.cargo', 'bin', 'rustup' ] | path_join }}"
   tasks:
+  - name: Ensure cargo is in PATH
+    lineinfile:
+      path: '{{ [home_dir,"bashrc"|path_join] }}'
+      line: export PATH=$PATH:{{[ home_dir, '.cargo', 'bin'] | path_join}}
+
   - name: Download RustUp
     get_url:
       url: "{{ rustup_download_url }}"
