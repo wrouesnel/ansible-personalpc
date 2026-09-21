@@ -10,7 +10,7 @@
   tasks:
   - name: Ensure cargo is in PATH
     lineinfile:
-      path: '{{ [home_dir,"bashrc"|path_join] }}'
+      path: '{{ [home_dir,".bashrc"]|path_join }}'
       line: export PATH=$PATH:{{[ home_dir, '.cargo', 'bin'] | path_join}}
 
   - name: Download RustUp
@@ -26,11 +26,18 @@
     ignore_errors: true
 
   - name: Install Rust if Needed
-    command: rustup.sh -y --profile=default --default-toolchain=nightly
-    when: rustup_present.st.exists|default(False)
+    shell: 
+      cmd: rustup.sh -y --profile=default --default-toolchain=nightly
+    when: (not rustup_present.stat.exists)|default(True)
 
   - name: Ensure nightly
-    command: "rustup toolchain install -y nightly"
+    shell: |
+      {{home_dir}}/.cargo/bin/rustup toolchain install nightly
+    args:
+      executable: /bin/bash
 
   - name: Switch to nightly
-    command: "rustup default nightly"
+    shell: |
+      {{home_dir}}/.cargo/bin/rustup default nightly
+    args:
+      executable: /bin/bash
