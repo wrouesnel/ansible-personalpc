@@ -75,18 +75,25 @@
     package:
       name:
       - cinnamon-core
-      # These are needed for electron apps to have working try icons
-      - xdg-desktop-portal-xapp
-      #- xapp-gtk3-module
-      - xapp-sn-watcher 
-      - gdm3
       - nemo
       - nemo-compare
       - nemo-gtkhash
       - nemo-fileroller
       - nemo-python
+      - gdm3
+      # These are needed for electron apps to have working try icons
+      - xdg-desktop-portal-xapp
+      #- xapp-gtk3-module
+      - xapp-sn-watcher 
       #- nemo-share
       #- nemo-mediainfo-tab
+      - ssh-askpass-gnome
+      - gnome-calculator
+    when: not mate_desktop|default(False)
+  
+  - name: Desktop packages
+    package:
+      name:
       - dconf-cli
       - dconf-editor
       - libreoffice
@@ -104,7 +111,6 @@
       - p11-kit
       - p11-kit-modules
       - rclone
-      - ssh-askpass-gnome
       - sysstat
       - wireshark
       - v4l-utils
@@ -114,7 +120,6 @@
       - xdot
       - git-gui
       - system-config-printer
-      - gnome-calculator
       - simplescreenrecorder
       state: latest
 
