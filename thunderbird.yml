@@ -42,7 +42,7 @@
         src: "https://download-installer.cdn.mozilla.net/pub/thunderbird/releases/{{thunderbird_version}}/linux-x86_64/en-US/thunderbird-{{thunderbird_version}}.tar.xz"
         dest: /opt/
         remote_src: true
-        creates: /opt/thunderbird/thunderbird
+        #creates: /opt/thunderbird
 
     - file:
         path: /usr/local/share/applications
