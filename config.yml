@@ -22,14 +22,15 @@
   connection: local
   become: false
   tasks:
+  - name: Ensure user directories exist
+    file:
+      path: "{{ item.value }}"
+      state: directory
+    loop: "{{user_dirs|dict2items}}"
+
   - name: Ensure .local/share/applications exists
     file:
       path: "{{ home_dir }}/.local/share/applications"
-      state: directory
-
-  - name: Ensure opt exists
-    file:
-      path: "{{ home_dir }}/opt"
       state: directory
 
 - hosts: localhost
