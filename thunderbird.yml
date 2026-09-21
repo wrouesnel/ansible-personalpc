@@ -27,7 +27,7 @@
 
     - set_fact:
         local_thunderbird_version: >-
-          {{ thunderbird_exe_version.stdout | regex_search('Mozilla Thunderbird (.*?)', '\1') | first }}
+          {{ thunderbird_exe_version.stdout | regex_search('Mozilla Thunderbird (\S*)', '\1') | first }}
       when: thunderbird_exe.stat.exists
     
     - set_fact:
