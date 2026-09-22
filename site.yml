@@ -51,7 +51,7 @@
 - import_playbook: envoy.yml
 - import_playbook: grpccurl.yml
 - import_playbook: logcli.yml
-- import_playbook: atuin.yml
+#- import_playbook: atuin.yml
 - import_playbook: dagger.yml
 - import_playbook: go-jira.yml
 - import_playbook: docker-distribution.yml
@@ -71,4 +71,5 @@
 # TODO: auto-setup Firefox profiles
 - import_playbook: gtk-themes.yml
 - import_playbook: dconf-restore.yml
+  when: not nonpersonal_pc|default(False)
 - import_playbook: user.yml

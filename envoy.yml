@@ -65,28 +65,28 @@
 
   - name: Check current egctl version
     block:
-    - file:
-        path: "{{ egctl_install_path }}"
-        state: directory
+    # - file:
+    #     path: "{{ egctl_install_path }}"
+    #     state: directory
 
-    - stat:
-        path: "{{ egctl_install_path }}/egctl"
-      register: egctl_exe
+    # - stat:
+    #     path: "{{ egctl_install_path }}/egctl"
+    #   register: egctl_exe
     
-    - shell: "{{ egctl_install_path }}/egctl version"
-      register: egctl_exe_version
-      when: egctl_exe.stat.exists
-      changed_when: false
-      check_mode: false
+    # - shell: "{{ egctl_install_path }}/egctl version"
+    #   register: egctl_exe_version
+    #   when: egctl_exe.stat.exists
+    #   changed_when: false
+    #   check_mode: false
 
-    - set_fact:
-        local_envoy_version: >-
-          {{ envoy_exe_version.stdout | regex_search('ENVOY_GATEWAY_VERSION: (\S*)', '\1') | first }}
-      when: egctl_exe.stat.exists
+    # - set_fact:
+    #     local_envoy_version: >-
+    #       {{ envoy_exe_version.stdout | regex_search('ENVOY_GATEWAY_VERSION: (\S*)', '\1') | first }}
+    #   when: egctl_exe.stat.exists
     
     - set_fact:
         local_envoy_version: "0.0.0"
-      when: not egctl_exe.stat.exists
+      #when: not egctl_exe.stat.exists
 
   - name: Update Envoy if needed
     block:
