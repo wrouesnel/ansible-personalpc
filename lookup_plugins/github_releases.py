@@ -16,6 +16,8 @@ import requests
 from ansible.plugins.lookup import LookupBase
 
 from github import Github
+from github import Auth
+
 import itertools
 
 DOCUMENTATION = """
@@ -37,7 +39,11 @@ class LookupModule(LookupBase):
         repo = kwargs.get("repo")
         num_results = kwargs.get("latest",None)
 
-        g = Github()
+        auth = None
+        if "github_releases_auth_token" in variables:
+            auth = Auth.Token(variables["github_releases_auth_token"])
+
+        g = Github(auth=auth)
 
         repo = g.get_user(user).get_repo(repo)
 
