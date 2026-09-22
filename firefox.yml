@@ -45,6 +45,28 @@
       - firefox
       state: absent
 
+  - name: Find the p11-kit-trust location
+    shell: dpkg -L p11-kit-modules | grep p11-kit-trust
+    register: p11_kit_trust
+
+  - name: Set firefox to use system level policies
+    copy:
+      dest: /etc/firefox/policies/policies.json
+      owner: root
+      group: root
+      mode: "0644"
+      content: |
+        {
+          "policies": {
+            "Certificates": {
+              "ImportEnterpriseRoots": true
+            },
+            "SecurityDevices": {
+              "Host": "{{p11_kit_trust.stdout_lines[0]}}",
+            }
+          }
+        }
+
   # # https://support.mozilla.org/en-US/kb/install-firefox-linux?as=u&utm_source=inproduct#w_install-firefox-deb-package-for-debian-based-distributions
   # - name: Deploy the security features fix
   #   copy:
