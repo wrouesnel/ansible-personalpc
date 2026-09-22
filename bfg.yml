@@ -14,7 +14,7 @@
 
   - name: Get current bfg names
     set_fact:
-      bfg_download_url: https://repo1.maven.org/maven2/com/madgag/bfg/{{'v' + bfg_version}}/bfg-{{bfg_version}}.jar
+      bfg_download_url: https://repo1.maven.org/maven2/com/madgag/bfg/{{bfg_version}}/bfg-{{bfg_version}}.jar
       bfg_download_name: bfg-{{bfg_version}}.jar
       bfg_install_path: "{{ user_dirs.opt }}/bfg"
 
@@ -31,15 +31,16 @@
     - shell: "{{ bfg_install_path }}/bfg --version"
       register: bfg_exe_version
       when: bfg_exe.stat.exists
+      failed_when: false
 
     - set_fact:
         local_bfg_version: >-
           {{ bfg_exe_version.stdout | regex_search('bfg (\S*)', '\1') | first }}
-      when: bfg_exe.stat.exists
+      when: bfg_exe.stat.exists and (bfg_exe_version.rc == 0)
     
     - set_fact:
         local_bfg_version: "0.0.0"
-      when: not bfg_exe.stat.exists
+      when: (not bfg_exe.stat.exists) or (bfg_exe_version.rc != 0)
 
   - name: Ensure the bfg launch script
     copy:

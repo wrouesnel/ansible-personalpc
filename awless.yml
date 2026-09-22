@@ -53,7 +53,7 @@
   - name: Extract the binary
     unarchive:
       src: "{{ user_dirs.opt }}/awless/{{ awless_asset.name }}"
-      dest: "{{ user_dirs.opt }}/awless/awless"
+      dest: "{{ user_dirs.opt }}/awless"
     when: awless_new_version
 
   - name: Remove archive file
@@ -64,7 +64,7 @@
 
   - name: Ensure bin link
     file:
-      src: "{{ user_dirs.opt }}/awless/{{ awless_asset.name | splitext | first }}"
+      src: "{{ user_dirs.opt }}/awless/awless"
       dest: "{{ user_dirs.bin }}/awless"
       mode: "0755"
       state: link
