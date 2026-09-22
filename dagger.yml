@@ -35,7 +35,7 @@
 
     - set_fact:
         local_dagger_version: >-
-          {{ dagger_exe_version.stderr | regex_search('dagger (\S*)' '\1') | first }}
+          {{ dagger_exe_version.stdout | regex_search('dagger (\S*)' '\1') | first }}
       when: dagger_exe.stat.exists
     
     - set_fact:

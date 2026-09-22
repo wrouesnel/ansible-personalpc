@@ -1,0 +1,12 @@
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Add x2go PPA
+    apt_repository:
+      repo: 'ppa:x2go/stable'
+
+  - name: Install the x2go client
+    package:
+      name:
+      - x2goclient
