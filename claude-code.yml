@@ -1,0 +1,61 @@
+# Claude Code: bootstraps the native install (which then self-updates) the same
+# way https://claude.ai/install.sh does, but with the checksum verified by Ansible.
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get current Claude Code names
+    set_fact:
+      claude_code_download_base_url: https://downloads.claude.ai/claude-code-releases
+      claude_code_platform: "linux-{{ {'x86_64': 'x64', 'aarch64': 'arm64'}[ansible_architecture] }}"
+      claude_code_install_path: "{{ home_dir }}/.local/bin"
+
+  - name: Get the current stable Claude Code version
+    set_fact:
+      claude_code_version: >-
+        {{ lookup('url', claude_code_download_base_url + '/stable') | trim }}
+
+  - name: Get the Claude Code release manifest
+    set_fact:
+      claude_code_manifest: >-
+        {{ lookup('url', claude_code_download_base_url + '/' + claude_code_version + '/manifest.json', split_lines=False) | from_json }}
+
+  - name: Check current Claude Code version
+    block:
+    - stat:
+        path: "{{ claude_code_install_path }}/claude"
+      register: claude_code_exe
+
+    - shell: "{{ claude_code_install_path }}/claude --version"
+      register: claude_code_exe_version
+      when: claude_code_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_claude_code_version: >-
+          {{ claude_code_exe_version.stdout | regex_search('^(\S+) \(Claude Code\)', '\1') | first }}
+      when: claude_code_exe.stat.exists
+
+    - set_fact:
+        local_claude_code_version: "0.0.0"
+      when: not claude_code_exe.stat.exists
+
+  # Claude Code auto-updates itself, so only install when it is missing or
+  # behind stable - never downgrade a newer self-updated version.
+  - name: Update Claude Code if needed
+    block:
+    - name: Download the Claude Code binary for this platform
+      get_url:
+        url: "{{ claude_code_download_base_url }}/{{ claude_code_version }}/{{ claude_code_platform }}/claude"
+        dest: "{{ user_dirs.downloads }}/claude-{{ claude_code_version }}-{{ claude_code_platform }}"
+        checksum: "sha256:{{ claude_code_manifest.platforms[claude_code_platform].checksum }}"
+        mode: "0755"
+
+    - name: Run the Claude Code installer
+      command: "{{ user_dirs.downloads }}/claude-{{ claude_code_version }}-{{ claude_code_platform }} install stable"
+
+    - file:
+        path: "{{ user_dirs.downloads }}/claude-{{ claude_code_version }}-{{ claude_code_platform }}"
+        state: absent
+    when: local_claude_code_version is version(claude_code_version, '<')
