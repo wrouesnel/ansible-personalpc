@@ -41,6 +41,7 @@
 - import_playbook: stern.yml
 - import_playbook: helm.yml
 - import_playbook: github-cli.yml
+- import_playbook: claude-code.yml
 - import_playbook: minikube.yml
 - import_playbook: minio.yml
 - import_playbook: rclone.yml
