@@ -1,3 +1,4 @@
+*.orig
 /debug.yml
 *.output.yml
 /.vscode
