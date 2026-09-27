@@ -65,9 +65,9 @@
 
   - name: Check current egctl version
     block:
-    # - file:
-    #     path: "{{ egctl_install_path }}"
-    #     state: directory
+    - file:
+        path: "{{ egctl_install_path }}"
+        state: directory
 
     # - stat:
     #     path: "{{ egctl_install_path }}/egctl"

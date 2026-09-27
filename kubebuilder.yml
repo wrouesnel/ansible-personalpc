@@ -33,7 +33,7 @@
 
     - set_fact:
         local_kubebuilder_version: >-
-          {{ kubebuilder_exe_version.stdout | regex_search('KubeBuilderVersion:"(\S*)"', '\1') | first }}
+          {{ kubebuilder_exe_version.stdout | regex_search('KubeBuilder(?:Version:"|:\s+)v?([^"\s]+)', '\1') | first }}
       when: kubebuilder_exe.stat.exists
     
     - set_fact:

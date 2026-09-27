@@ -69,9 +69,9 @@
           <bridge name='virbr0' stp='on' delay='0'/>
           <mac address='{{ "52:54:00" | random_mac }}'/>
           <domain name='default.libvirt' localOnly='yes'/>
-          <ip address='{{ network.vm_network | ipaddr("address") }}' netmask='{{ network.vm_network | ipaddr("netmask") }}'>
+          <ip address='{{ network.vm_network | ansible.utils.ipaddr("address") }}' netmask='{{ network.vm_network | ansible.utils.ipaddr("netmask") }}'>
             <dhcp>
-              <range start='{{ network.vm_network | ipaddr("next_usable") }}' end='{{ network.vm_network | ipaddr("last_usable") }}'/>
+              <range start='{{ network.vm_network | ansible.utils.ipaddr("next_usable") }}' end='{{ network.vm_network | ansible.utils.ipaddr("last_usable") }}'/>
             </dhcp>
           </ip>
           <dnsmasq:options>
@@ -147,7 +147,7 @@
       dest: /etc/systemd/resolved.conf.d/libvirt-redirect.conf
       content: |
         [Resolve]
-        DNS={{ network.vm_network | ipaddr("address") }}%virbr0#default.libvirt
+        DNS={{ network.vm_network | ansible.utils.ipaddr("address") }}%virbr0#default.libvirt
       owner: root
       group: root
       mode: "0644"

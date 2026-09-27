@@ -2,6 +2,11 @@
 - hosts: localhost
   connection: local
   tasks:
+  - name: Create GTK3 config directory
+    file:
+      path: "{{ [ home_dir, '.config', 'gtk-3.0' ] | path_join }}"
+      state: directory
+
   - name: GTK3 theme customizations
     copy:
       src: "{{ files_dir }}/home/.config/gtk-3.0/gtk.css"

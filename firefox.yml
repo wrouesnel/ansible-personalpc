@@ -49,6 +49,14 @@
     shell: dpkg -L p11-kit-modules | grep p11-kit-trust
     register: p11_kit_trust
 
+  - name: Create firefox policies directory
+    file:
+      path: /etc/firefox/policies
+      state: directory
+      owner: root
+      group: root
+      mode: "0755"
+
   - name: Set firefox to use system level policies
     copy:
       dest: /etc/firefox/policies/policies.json
@@ -62,7 +70,7 @@
               "ImportEnterpriseRoots": true
             },
             "SecurityDevices": {
-              "Host": "{{p11_kit_trust.stdout_lines[0]}}",
+              "Host": "{{p11_kit_trust.stdout_lines[0]}}"
             }
           }
         }

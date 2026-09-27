@@ -1,3 +1,4 @@
+#!/bin/bash
 # See: https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 # Note: you can't refactor this out: its at the top of every script so the scripts can find their includes.
 SOURCE="${BASH_SOURCE[0]}"

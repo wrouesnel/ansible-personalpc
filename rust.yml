@@ -27,7 +27,7 @@
 
   - name: Install Rust if Needed
     shell: 
-      cmd: rustup.sh -y --profile=default --default-toolchain=nightly
+      cmd: "{{ rustup_download_path }} -y --profile=default --default-toolchain=nightly"
     when: (not rustup_present.stat.exists)|default(True)
 
   - name: Ensure nightly
