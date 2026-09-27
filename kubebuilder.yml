@@ -30,6 +30,8 @@
     - shell: "{{ kubebuilder_install_path }}/kubebuilder version"
       register: kubebuilder_exe_version
       when: kubebuilder_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_kubebuilder_version: >-

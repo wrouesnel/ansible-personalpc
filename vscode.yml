@@ -55,7 +55,25 @@
     when: vscode_sources.stat.exists
 
   - name: Make VS Code the default text editor
-    shell: update-alternatives --set editor /usr/bin/code
+    community.general.alternatives:
+      name: editor
+      path: /usr/bin/code
 
-  - name:
-    shell: xdg-mime default code.desktop text/plain
+  # Newer releases renamed code.desktop to com.microsoft.VSCode.desktop
+  - name: Find the VS Code desktop file
+    shell: dpkg -L code | grep -E '/applications/(code|com\.microsoft\.VSCode)\.desktop$'
+    register: vscode_desktop_file
+    changed_when: false
+    check_mode: false
+
+  - name: Check the default text/plain handler
+    command: xdg-mime query default text/plain
+    register: xdg_text_plain
+    become: false
+    changed_when: false
+    check_mode: false
+
+  - name: Make VS Code the default text/plain handler
+    command: xdg-mime default {{ vscode_desktop_file.stdout | basename }} text/plain
+    become: false
+    when: xdg_text_plain.stdout | trim != vscode_desktop_file.stdout | basename

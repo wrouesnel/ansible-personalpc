@@ -24,6 +24,8 @@
     - shell: "{{ thunderbird_install_path }}/thunderbird -version"
       register: thunderbird_exe_version
       when: thunderbird_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_thunderbird_version: >-

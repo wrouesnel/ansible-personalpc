@@ -67,7 +67,6 @@
           <name>default</name>
           <forward mode='nat'/>
           <bridge name='virbr0' stp='on' delay='0'/>
-          <mac address='{{ "52:54:00" | random_mac }}'/>
           <domain name='default.libvirt' localOnly='yes'/>
           <ip address='{{ network.vm_network | ansible.utils.ipaddr("address") }}' netmask='{{ network.vm_network | ansible.utils.ipaddr("netmask") }}'>
             <dhcp>
@@ -80,7 +79,7 @@
         </network>
 
   - name: Get the existing XML
-    command: virsh net-dumpxml default
+    command: virsh net-dumpxml --inactive default
     register: existing_default_xml
     changed_when: false
     failed_when: false
@@ -113,12 +112,27 @@
       register: existing_network_uuid
       changed_when: false
 
+    - name: extract the MAC of the network
+      xml:
+        path: "{{ existing_temp_file.path}}"
+        xpath: '//network/mac'
+        content: attribute
+      register: existing_network_mac
+      changed_when: false
+
     - name: inject the UUID into the network
       xml:
         path: "{{ intended_temp_file.path}}"
         xpath: '//network'
         add_children: "{{existing_network_uuid.matches}}"
       register: existing_network_uuid
+      changed_when: false
+
+    - name: inject the MAC into the network
+      xml:
+        path: "{{ intended_temp_file.path}}"
+        xpath: '//network'
+        add_children: "{{existing_network_mac.matches}}"
       changed_when: false
 
     - name: Update the network
@@ -131,7 +145,7 @@
       - "{{existing_temp_file.path}}"
       - "{{intended_temp_file.path}}"
       changed_when: false
-    when: query("normalize_xml", existing_default_xml.stdout, remove="//network/uuid")[0] != query("normalize_xml", intended_default_xml, remove="//network/uuid")[0]
+    when: query("normalize_xml", existing_default_xml.stdout, remove=["//network/uuid", "//network/mac"])[0] != query("normalize_xml", intended_default_xml, remove=["//network/uuid", "//network/mac"])[0]
 
 
   - name: ensure resolved.conf.d exists
@@ -171,4 +185,6 @@
       mode: "0644"
 
   - name: ensure bridge helper is setuid
-    shell: chmod u+s /usr/lib/qemu/qemu-bridge-helper
+    file:
+      path: /usr/lib/qemu/qemu-bridge-helper
+      mode: u+s

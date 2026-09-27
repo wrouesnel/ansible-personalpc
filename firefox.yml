@@ -48,6 +48,8 @@
   - name: Find the p11-kit-trust location
     shell: dpkg -L p11-kit-modules | grep p11-kit-trust
     register: p11_kit_trust
+    changed_when: false
+    check_mode: false
 
   - name: Create firefox policies directory
     file:

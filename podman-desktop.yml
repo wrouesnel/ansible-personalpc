@@ -31,6 +31,8 @@
     - shell: cat "{{ podman_desktop_install_path }}/version"
       register: podman_desktop_exe_version
       when: podman_desktop_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_podman_desktop_version: >-

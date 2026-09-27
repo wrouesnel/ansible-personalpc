@@ -30,6 +30,8 @@
     - shell: "{{ distribution_install_path }}/registry --version"
       register: distribution_exe_version
       when: distribution_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_distribution_version: >-

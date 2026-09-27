@@ -35,9 +35,18 @@
       {{home_dir}}/.cargo/bin/rustup toolchain install nightly
     args:
       executable: /bin/bash
+    register: rustup_nightly
+    changed_when: "' unchanged - ' not in rustup_nightly.stdout"
+
+  - name: Get the default toolchain
+    command: "{{home_dir}}/.cargo/bin/rustup default"
+    register: rustup_default
+    changed_when: false
+    check_mode: false
 
   - name: Switch to nightly
     shell: |
       {{home_dir}}/.cargo/bin/rustup default nightly
     args:
       executable: /bin/bash
+    when: not rustup_default.stdout.startswith('nightly-')

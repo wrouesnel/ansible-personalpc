@@ -34,6 +34,8 @@
     - shell: "{{ mitmproxy_install_path }}/mitmproxy --version"
       register: mitmproxy_exe_version
       when: mitmproxy_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_mitmproxy_version: >-

@@ -30,6 +30,8 @@
     - shell: "{{ helm_install_path }}/helm version"
       register: helm_exe_version
       when: helm_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_helm_version: >-

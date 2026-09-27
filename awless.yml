@@ -15,9 +15,11 @@
 
 
   - name: Check installed version
-    shell: awless --version | cut -d' ' -f1 | cut -d'=' -f2 | tr -d ','
+    command: "{{ user_dirs.opt }}/awless/awless --version"
     register: awless_result
     failed_when: false
+    changed_when: false
+    check_mode: false
 
   - name: Get the asset
     set_fact:
@@ -36,7 +38,7 @@
     set_fact:
       awless_latest_version: "{{ (awless_releases.in_order|first).tag_name }}"
       awless_current_version: >-
-        {{ awless_result.stdout|trim }}
+        {{ awless_result.stdout | regex_search('version=([^,]+)', '\1') | default([''], true) | first }}
   
   - name: Check if new version needed
     set_fact:

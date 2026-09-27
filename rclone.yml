@@ -2,20 +2,47 @@
 - hosts: localhost
   connection: local
   become: false
+  vars:
+    rclone_install_path: "{{ [user_dirs.opt, 'rclone'] | path_join }}"
   tasks:
   - file:
-      path: "{{ [user_dirs.opt, 'rclone'] | path_join }}"
+      path: "{{ rclone_install_path }}"
       state: directory
+
+  - name: Get the current rclone version
+    set_fact:
+      rclone_version: "{{ lookup('url', 'https://downloads.rclone.org/version.txt') | trim }}"
+
+  - name: Check current rclone version
+    block:
+    - stat:
+        path: "{{ rclone_install_path }}/rclone"
+      register: rclone_exe
+
+    - shell: "{{ rclone_install_path }}/rclone version | head -n1"
+      register: rclone_exe_version
+      when: rclone_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_rclone_version: "{{ rclone_exe_version.stdout | trim }}"
+      when: rclone_exe.stat.exists
+
+    - set_fact:
+        local_rclone_version: "0.0.0"
+      when: not rclone_exe.stat.exists
 
   - name: Download rclone
     unarchive:
       src: "https://downloads.rclone.org/rclone-current-linux-amd64.zip"
-      dest: "{{ [user_dirs.opt, 'rclone'] | path_join }}"
+      dest: "{{ rclone_install_path }}"
       remote_src: true
       extra_opts:
       - -j
+    when: rclone_version != local_rclone_version
 
   - file:
-      src: "{{ [user_dirs.opt, 'rclone', 'rclone'] | path_join }}"
+      src: "{{ [rclone_install_path, 'rclone'] | path_join }}"
       dest: "{{ [ user_dirs.bin, 'rclone' ] | path_join }}"
       state: link

@@ -33,6 +33,9 @@
 
 - import_playbook: libvirt.yml
 
+- import_playbook: x2go-server.yml
+  when: x2go_server|default(False)
+
 #- import_playbook: opensnitch.yml
 
 # Support CLI tools

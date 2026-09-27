@@ -30,6 +30,8 @@
     - shell: "{{ zek_install_path }}/zek --version"
       register: zek_exe_version
       when: zek_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_zek_version: >-

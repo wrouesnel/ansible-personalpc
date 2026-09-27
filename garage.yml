@@ -32,6 +32,8 @@
     - shell: "{{ garage_install_path }}/garage --version"
       register: garage_exe_version
       when: garage_exe.stat.exists
+      changed_when: false
+      check_mode: false
 
     - set_fact:
         local_garage_version: >-
