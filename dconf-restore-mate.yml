@@ -1,8 +1,10 @@
-# Restore the mate dconf settings backup made by pull.yml
+# Restore the mate dconf settings backup made by pull.yml, or the default
+# settings from files/dconf if the backup hasn't synced yet.
 - hosts: localhost
   connection: local
   vars:
     dconf_backup_file: "{{ [persistent_user_config.linux.shared, dconf_backup_files.mate] | path_join }}"
+    dconf_fallback_file: "{{ [files_dir, 'dconf', 'mate.settings'] | path_join }}"
   tasks:
   # The settings arrive via syncthing, so won't exist on a fresh machine.
   - name: Check for dconf settings
@@ -13,3 +15,7 @@
   - name: Restoring dconf settings
     shell: dconf load / < {{ dconf_backup_file }}
     when: dconf_settings.stat.exists
+
+  - name: Restoring default dconf settings
+    shell: dconf load / < {{ dconf_fallback_file }}
+    when: not dconf_settings.stat.exists

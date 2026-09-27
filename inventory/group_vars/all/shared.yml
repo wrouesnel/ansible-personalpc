@@ -25,7 +25,8 @@ supported_desktop_environments:
 - mate
 
 # dconf backups in persistent_user_config.linux.shared, per desktop environment.
-# Cinnamon keeps the original file name.
+# Cinnamon keeps the original file name. files/dconf/<name>.settings is
+# restored instead until the backup exists.
 dconf_backup_files:
   cinnamon: dconf.settings
   mate: dconf-mate.settings
