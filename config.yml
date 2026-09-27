@@ -54,5 +54,6 @@
   - name: Ensure user config bashrc loads
     lineinfile:
       path: "{{ home_dir }}/.bashrc"
-      regexp: ^source $HOME/config/linux/shared/bashrc
-      line: source $HOME/config/linux/shared/bashrc
+      # Syncthing may not have delivered the file yet on a fresh machine.
+      regexp: config/linux/shared/bashrc
+      line: 'if [ -f "$HOME/config/linux/shared/bashrc" ]; then source "$HOME/config/linux/shared/bashrc"; fi'
