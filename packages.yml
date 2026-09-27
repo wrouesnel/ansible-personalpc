@@ -66,40 +66,12 @@
 #       - clevis-udisks2
 #       state: latest
 
-# Desktop packages. This produces a functional desktop and would be applicable everywhere.
+# Desktop packages. Applicable to every desktop environment - the environment
+# itself is installed by desktop-<name>.yml.
 - hosts: localhost
   connection: local
   become: true
   tasks:
-  - name: Desktop packages
-    package:
-      name:
-      - cinnamon-core
-      - nemo
-      - nemo-compare
-      - nemo-gtkhash
-      - nemo-fileroller
-      - nemo-python
-      - gdm3
-      # These are needed for electron apps to have working try icons
-      - xdg-desktop-portal-xapp
-      #- xapp-gtk3-module
-      - xapp-sn-watcher 
-      #- nemo-share
-      #- nemo-mediainfo-tab
-      - ssh-askpass-gnome
-      - gnome-calculator
-    when: not mate_desktop|default(False)
-
-  - name: Desktop packages (MATE)
-    package:
-      name:
-      - mate-desktop-environment-core
-      - gdm3
-      - ssh-askpass-gnome
-      - gnome-calculator
-    when: mate_desktop|default(False)
-  
   - name: Desktop packages
     package:
       name:

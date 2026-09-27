@@ -17,5 +17,18 @@ persistent_user_config:
 
 apt_keyring_dir: /etc/apt/keyrings
 
+# Desktop environment to install and configure. Each one has a
+# desktop-<name>.yml and dconf-restore-<name>.yml playbook.
+desktop_environment: cinnamon
+supported_desktop_environments:
+- cinnamon
+- mate
+
+# dconf backups in persistent_user_config.linux.shared, per desktop environment.
+# Cinnamon keeps the original file name.
+dconf_backup_files:
+  cinnamon: dconf.settings
+  mate: dconf-mate.settings
+
 network:
   vm_network: 192.168.122.1/24

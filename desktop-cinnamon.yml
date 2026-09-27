@@ -1,0 +1,23 @@
+# Cinnamon desktop environment (the default desktop_environment)
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Desktop packages (Cinnamon)
+    package:
+      name:
+      - cinnamon-core
+      - nemo
+      - nemo-compare
+      - nemo-gtkhash
+      - nemo-fileroller
+      - nemo-python
+      - gdm3
+      # These are needed for electron apps to have working try icons
+      - xdg-desktop-portal-xapp
+      #- xapp-gtk3-module
+      - xapp-sn-watcher 
+      #- nemo-share
+      #- nemo-mediainfo-tab
+      - ssh-askpass-gnome
+      - gnome-calculator

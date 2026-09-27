@@ -1,0 +1,12 @@
+# MATE desktop environment (desktop_environment: mate)
+- hosts: localhost
+  connection: local
+  become: true
+  tasks:
+  - name: Desktop packages (MATE)
+    package:
+      name:
+      - mate-desktop-environment-core
+      - gdm3
+      - ssh-askpass-gnome
+      - gnome-calculator

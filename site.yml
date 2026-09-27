@@ -2,13 +2,23 @@
 # Deploy/update a personal computer system.
 - hosts: localhost
   connection: local
-  tasks: []
+  tasks:
+  - name: Check the desktop environment is supported
+    assert:
+      that: desktop_environment in supported_desktop_environments
+      fail_msg: >-
+        desktop_environment '{{ desktop_environment }}' is not one of
+        {{ supported_desktop_environments | join(', ') }}
 
 - import_playbook: config.yml
 - import_playbook: apt.yml
 - import_playbook: udev.yml
 
 - import_playbook: packages.yml
+- import_playbook: desktop-cinnamon.yml
+  when: desktop_environment == 'cinnamon'
+- import_playbook: desktop-mate.yml
+  when: desktop_environment == 'mate'
 - import_playbook: keepass.yml
 - import_playbook: yubico.yml
 
@@ -74,6 +84,8 @@
 # TODO: figure out how to pull the desktop config
 # TODO: auto-setup Firefox profiles
 - import_playbook: gtk-themes.yml
-- import_playbook: dconf-restore.yml
-  when: not nonpersonal_pc|default(False)
+- import_playbook: dconf-restore-cinnamon.yml
+  when: not nonpersonal_pc|default(False) and desktop_environment == 'cinnamon'
+- import_playbook: dconf-restore-mate.yml
+  when: not nonpersonal_pc|default(False) and desktop_environment == 'mate'
 - import_playbook: user.yml
