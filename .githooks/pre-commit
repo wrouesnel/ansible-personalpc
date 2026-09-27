@@ -22,6 +22,17 @@ done < <(git diff --cached --name-only --diff-filter=ACM)
 # Queue up return codes so we always run all pre-commits.
 retcode=0
 
+# Scan the staged changes for secrets.
+if command -v gitleaks 1>/dev/null 2>&1; then
+    if ! gitleaks git --pre-commit --staged --redact --no-banner . ; then
+        error "gitleaks found possible secrets. Use git commit --no-verify to ignore."
+        retcode=1
+    fi
+else
+    error "gitleaks is not installed - run gitleaks.yml. Use git commit --no-verify to ignore."
+    retcode=1
+fi
+
 # ./fmt automatically (it's just annoying not to)
 
 if [ -e ./fmt ]; then

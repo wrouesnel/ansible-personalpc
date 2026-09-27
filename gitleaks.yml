@@ -1,0 +1,59 @@
+# gitleaks - secret scanner, also used by this repo's pre-commit hook
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest gitleaks release
+    set_fact:
+      gitleaks_releases: |
+        {{ query("github_releases", user="gitleaks", repo="gitleaks", latest=1)[0] }}
+
+  - name: Get the current gitleaks version
+    set_fact:
+      gitleaks_version: "{{ gitleaks_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current gitleaks names
+    set_fact:
+      gitleaks_download_name: "gitleaks_{{ gitleaks_version }}_linux_{{ {'x86_64': 'x64', 'aarch64': 'arm64'}[ansible_architecture] }}.tar.gz"
+      gitleaks_install_path: "{{ user_dirs.opt }}/gitleaks"
+
+  - name: Check current gitleaks version
+    block:
+    - file:
+        path: "{{ gitleaks_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ gitleaks_install_path }}/gitleaks"
+      register: gitleaks_exe
+
+    - shell: "{{ gitleaks_install_path }}/gitleaks version"
+      register: gitleaks_exe_version
+      when: gitleaks_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_gitleaks_version: "{{ gitleaks_exe_version.stdout | trim | regex_replace('^v', '') }}"
+      when: gitleaks_exe.stat.exists
+
+    - set_fact:
+        local_gitleaks_version: "0.0.0"
+      when: not gitleaks_exe.stat.exists
+
+  - name: Update gitleaks if needed
+    block:
+    - name: Get the download URL for this platform
+      get_url:
+        url: "{{ gitleaks_releases.asset_by_tag['v' + gitleaks_version][gitleaks_download_name].browser_download_url }}"
+        dest: "{{ user_dirs.downloads }}/{{ gitleaks_download_name }}"
+
+    - unarchive:
+        src: "{{ user_dirs.downloads }}/{{ gitleaks_download_name }}"
+        dest: "{{ gitleaks_install_path }}"
+    when: gitleaks_version != local_gitleaks_version
+
+  - file:
+      src: "{{ gitleaks_install_path }}/gitleaks"
+      dest: "{{ user_dirs.bin }}/gitleaks"
+      state: link

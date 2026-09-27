@@ -71,6 +71,7 @@
 - import_playbook: docker-distribution.yml
 - import_playbook: caddy.yml
 - import_playbook: bfg.yml
+- import_playbook: gitleaks.yml
 #- import_playbook: egctl.yml
 - import_playbook: kubebuilder.yml
 - import_playbook: olm.yml

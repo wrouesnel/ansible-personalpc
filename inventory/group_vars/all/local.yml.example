@@ -1,0 +1,40 @@
+# Per-machine settings. Copy this file to local.yml in this directory and edit
+# it before running the playbooks:
+#
+#   cp inventory/group_vars/all/local.yml.example inventory/group_vars/all/local.yml
+#
+# local.yml is git-ignored, so secrets and internal names belong there and
+# never in shared.yml. Everything below is optional - leave a setting out to
+# get the default.
+
+# GitHub API token for the github_releases lookup. Without one, a full run can
+# hit GitHub's anonymous rate limit (60 requests/hour). A token with no scopes
+# is enough, or use the GitHub CLI's: gh auth token
+#github_releases_auth_token: "<token>"
+
+# Desktop environment to install and restore settings for: cinnamon (default)
+# or mate. See supported_desktop_environments in shared.yml.
+#desktop_environment: mate
+
+# Machines which don't get personal data. Skips syncthing and the dconf restore.
+#nonpersonal_pc: true
+
+# Install the X2Go server (x2go-server.yml).
+#x2go_server: true
+
+network:
+  # Local network domain. When set:
+  # - apt and proxydetect look for a proxy at <domain>:3128
+  # - apt trusts the proxy CA at /etc/ssl/mitmproxies/<domain>/ca-certificates.crt
+  # - podman uses registry-mirror.<domain> as a mirror for each registry
+  #   (unless registry_mirrors below sets mirrors for it)
+  #domain: home.example.com
+
+  # The libvirt default network. Defaults to 192.168.122.1/24 (shared.yml).
+  #vm_network: 192.168.122.1/24
+
+# Explicit podman registry mirrors, per registry.
+#registry_mirrors:
+#  docker.io:
+#    mirrors:
+#    - mirror.example.com/docker.io

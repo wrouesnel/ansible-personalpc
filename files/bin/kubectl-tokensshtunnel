@@ -49,6 +49,9 @@ load_mac() {
     EXPIRE_TOKEN="$(date -u -v+1H -j -f "%Y-%m-%dT%H:%M:%SZ" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" +"%Y-%m-%dT%H:%M:%SZ")"
 }
 
+# The cache holds the cluster client key - keep it private.
+umask 077
+
 MAX_DURATION="3600"
 TMP_CRED="$HOME/.ktst_cache"
 REMOTE_KUBE_CONFIG="/etc/rancher/k3s/k3s.yaml"
@@ -160,5 +163,5 @@ echo "{
         \"clientCertificateData\":\"${CCD_DATA}\",
         \"clientKeyData\":\"${CKD_DATA}\"
         }
-    }" | tee $TMP_CRED
+    }" | { [ -e "$TMP_CRED" ] && chmod 600 "$TMP_CRED"; tee "$TMP_CRED"; }
 
