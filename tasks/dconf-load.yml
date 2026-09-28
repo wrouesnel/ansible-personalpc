@@ -4,14 +4,18 @@
 - name: Restoring dconf settings from {{ dconf_load_file | basename }}
   shell: |
     set -o pipefail
+    excludes=()
+    while IFS= read -r pattern; do
+        [ -n "$pattern" ] && excludes+=(--exclude "$pattern")
+    done <<< "$DCONF_EXCLUDE"
     before="$(dconf dump /)"
-    awk -v exclude="$DCONF_EXCLUDE" -f "$DCONF_FILTER" "$DCONF_FILE" | dconf load /
+    python3 "$DCONF_FILTER" "${excludes[@]}" "$DCONF_FILE" | dconf load /
     if [ "$before" != "$(dconf dump /)" ]; then echo changed; fi
   args:
     executable: /bin/bash
   environment:
-    DCONF_EXCLUDE: "{{ dconf_exclude | join('|') }}"
-    DCONF_FILTER: "{{ [files_dir, 'dconf', 'filter.awk'] | path_join }}"
+    DCONF_EXCLUDE: "{{ dconf_exclude | join('\n') }}"
+    DCONF_FILTER: "{{ [files_dir, 'dconf', 'filter.py'] | path_join }}"
     DCONF_FILE: "{{ dconf_load_file }}"
   register: dconf_load
   changed_when: dconf_load.stdout == 'changed'
