@@ -12,10 +12,6 @@
       path: "{{ dconf_backup_file }}"
     register: dconf_settings
 
-  - name: Restoring dconf settings
-    shell: dconf load / < {{ dconf_backup_file }}
-    when: dconf_settings.stat.exists
-
-  - name: Restoring default dconf settings
-    shell: dconf load / < {{ dconf_fallback_file }}
-    when: not dconf_settings.stat.exists
+  - include_tasks: tasks/dconf-load.yml
+    vars:
+      dconf_load_file: "{{ dconf_backup_file if dconf_settings.stat.exists else dconf_fallback_file }}"

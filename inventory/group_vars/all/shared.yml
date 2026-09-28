@@ -31,5 +31,18 @@ dconf_backup_files:
   cinnamon: dconf.settings
   mate: dconf-mate.settings
 
+# dconf keys (regexes over the full key path) which are never saved by pull.yml
+# or restored: typed-input and recent-location history, which can capture
+# anything that was pasted into a search box.
+dconf_exclude:
+- ^/org/gnome/gedit/state/history-entry/
+- ^/org/x/editor/state/history-entry/
+- ^/org/cinnamon/command-history$
+- ^/org/cinnamon/looking-glass-history$
+- ^/apps/seahorse/last-search-
+- /last-folder-uri$
+- /last-save-directory$
+- /last-path$
+
 network:
   vm_network: 192.168.122.1/24
