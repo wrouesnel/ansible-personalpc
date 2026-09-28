@@ -148,23 +148,61 @@
     when: query("normalize_xml", existing_default_xml.stdout, remove=["//network/uuid", "//network/mac"])[0] != query("normalize_xml", intended_default_xml, remove=["//network/uuid", "//network/mac"])[0]
 
 
-  - name: ensure resolved.conf.d exists
+  # Send *.default.libvirt lookups to the default network's dnsmasq. This is
+  # set on the virbr0 link from a network hook each time libvirt starts the
+  # network: a global resolved.conf DNS=...%virbr0 entry is dropped when
+  # systemd-resolved starts before libvirt has created virbr0 (i.e. at boot).
+  - name: Remove the old global libvirt DNS redirect
     file:
-      path: /etc/systemd/resolved.conf.d
+      path: /etc/systemd/resolved.conf.d/libvirt-redirect.conf
+      state: absent
+    notify: restart systemd-resolved
+
+  - name: ensure the libvirt network hooks directory exists
+    file:
+      path: /etc/libvirt/hooks/network.d
       owner: root
       group: root
       mode: "0755"
       state: directory
 
-  - name: setup libvirt redirect
+  - name: Install the libvirt network hook for systemd-resolved
     copy:
-      dest: /etc/systemd/resolved.conf.d/libvirt-redirect.conf
+      dest: /etc/libvirt/hooks/network.d/resolved
       content: |
-        [Resolve]
-        DNS={{ network.vm_network | ansible.utils.ipaddr("address") }}%virbr0#default.libvirt
+        #!/bin/bash
+        # ANSIBLE MANAGED - libvirt network hook (libvirt.yml)
+        # Route *.default.libvirt lookups to the default network's dnsmasq
+        # whenever libvirt starts it. Never fails: a failing hook would stop
+        # the network from starting.
+        #   args: <network> <operation> <sub-operation> <extra>
+        [ "$1" = "default" ] && [ "$2" = "started" ] || exit 0
+        resolvectl dns virbr0 {{ network.vm_network | ansible.utils.ipaddr("address") }} || true
+        resolvectl domain virbr0 '~default.libvirt' || true
+        resolvectl default-route virbr0 false || true
+        exit 0
       owner: root
       group: root
-      mode: "0644"
+      mode: "0755"
+    notify: restart libvirtd
+
+  - meta: flush_handlers
+
+  # The hook only runs when the network starts, so apply it now if the
+  # network is already up.
+  - name: Point systemd-resolved at the running default network
+    shell: |
+      set -o pipefail
+      if ! ip link show virbr0 >/dev/null 2>&1; then exit 0; fi
+      current="$(resolvectl dns virbr0; resolvectl domain virbr0)"
+      if [[ "$current" != *" {{ network.vm_network | ansible.utils.ipaddr("address") }}"* || "$current" != *"~default.libvirt"* ]]; then
+          /etc/libvirt/hooks/network.d/resolved default started begin -
+          echo changed
+      fi
+    args:
+      executable: /bin/bash
+    register: libvirt_resolved
+    changed_when: libvirt_resolved.stdout == 'changed'
 
   - name: ensure resolved.conf.d exists
     file:
@@ -188,3 +226,15 @@
     file:
       path: /usr/lib/qemu/qemu-bridge-helper
       mode: u+s
+
+  handlers:
+  - name: restart systemd-resolved
+    service:
+      name: systemd-resolved
+      state: restarted
+
+  # Picks up new hook scripts. Running VMs are unaffected.
+  - name: restart libvirtd
+    service:
+      name: libvirtd
+      state: restarted
