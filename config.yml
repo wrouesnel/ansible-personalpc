@@ -57,3 +57,17 @@
       # Syncthing may not have delivered the file yet on a fresh machine.
       regexp: config/linux/shared/bashrc
       line: 'if [ -f "$HOME/config/linux/shared/bashrc" ]; then source "$HOME/config/linux/shared/bashrc"; fi'
+
+  # Lets libsecret (and anything else using the session bus) reach the desktop
+  # session's keyring from SSH, su or tmux shells. At the top of .bashrc so it
+  # runs before the non-interactive early return.
+  - name: Connect shells to the desktop session D-Bus
+    blockinfile:
+      path: "{{ home_dir }}/.bashrc"
+      insertbefore: BOF
+      marker: "# {mark} ANSIBLE MANAGED BLOCK session dbus"
+      block: |
+        if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -S "/run/user/$(id -u)/bus" ]; then
+            export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+            export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+        fi
