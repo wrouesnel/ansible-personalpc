@@ -12,18 +12,24 @@ import subprocess
 import sys
 import os
 from pathlib import Path
+import re
 import signal
 from furl import furl
 
 def main():
     root_dir = Path("~/src").expanduser()
 
-    # Parse the clone URL
-    clone_url = furl(sys.argv[1])
+    # Parse the clone URL (convert scp-style "user@host:path" so furl can parse it)
+    url = sys.argv[1]
+    if "://" not in url and re.match(r"^[^/]+:", url):
+        url = "ssh://" + url.replace(":", "/", 1)
+    clone_url = furl(url)
+    segments = [seg for seg in clone_url.path.segments if seg]
     clone_dir = root_dir / clone_url.host
-    for seg in clone_url.path.segments[:-1]:
+    for seg in segments[:-1]:
         clone_dir /= seg
     clone_dir.mkdir(parents=True, exist_ok=True)
+    repo_dir = clone_dir / segments[-1].removesuffix(".git")
 
     cmd = ["git","clone"]
     cmd.extend(sys.argv[1:])
@@ -45,7 +51,22 @@ def main():
             #print("Skipping {}".format(i))
             pass
     p.wait()
-    sys.stderr.write(str(clone_dir) + "\n")
+    if p.returncode != 0:
+        sys.exit(p.returncode)
+
+    # Honour an explicit target directory, e.g. "git-clone <url> [opts] <dir>"
+    if len(sys.argv) > 2 and (clone_dir / sys.argv[-1]).is_dir():
+        repo_dir = clone_dir / sys.argv[-1]
+
+    # Restore default signal handling and replace this process with a shell in the checkout
+    for i in [x for x in dir(signal) if x.startswith("SIG") and not x.startswith("SIG_")]:
+        try:
+            signal.signal(getattr(signal, i), signal.SIG_DFL)
+        except (OSError, RuntimeError, ValueError, TypeError):
+            pass
+    sys.stderr.write(f"{repo_dir}\n")
+    os.chdir(repo_dir)
+    os.execvpe("bash", ["bash"], env)
 
 if __name__ == "__main__":
     main()
