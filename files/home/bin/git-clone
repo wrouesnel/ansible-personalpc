@@ -1,52 +1,101 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "furl",
-# ]
-# ///
+#!/usr/bin/env python3
+"""Clone git repos to ~/src/<host>/<path> and open a shell in the checkout.
 
-"""Clone git repos to the default directory structure"""
+Usage: git-clone <url> [git clone options...]
 
+If the checkout already exists it is fetched and its status against the
+upstream branch is reported instead of cloning.
+"""
+
+import os
+import re
 import subprocess
 import sys
-import os
 from pathlib import Path
-import signal
-from furl import furl
+from urllib.parse import urlsplit
+
+
+def parse_url(url: str) -> tuple[str, list[str]]:
+    """Return the host and path segments of a clone URL."""
+    if "://" in url:
+        parts = urlsplit(url)
+        host, path = parts.hostname, parts.path
+    else:
+        # scp-style "user@host:path"
+        m = re.match(r"^(?:[^@/]+@)?([^:/]+):(.*)$", url)
+        if m is None:
+            sys.exit(f"git-clone: cannot parse repository URL: {url}")
+        host, path = m.groups()
+    segments = [seg for seg in path.split("/") if seg]
+    if not host or not segments:
+        sys.exit(f"git-clone: cannot parse repository URL: {url}")
+    segments[-1] = segments[-1].removesuffix(".git")
+    return host.lower(), segments
+
+
+def git(repo_dir: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", *args], cwd=repo_dir, capture_output=True, text=True)
+
+
+def report_status(repo_dir: Path) -> None:
+    """Fetch and print whether the checkout is up to date with its upstream."""
+    print("Fetching...", file=sys.stderr)
+    fetch = subprocess.run(["git", "fetch", "--quiet"], cwd=repo_dir)
+    if fetch.returncode != 0:
+        print("Fetch failed: status below may be stale", file=sys.stderr)
+
+    branch = git(repo_dir, "symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip()
+    upstream = git(repo_dir, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+    if not branch:
+        print("HEAD is detached", file=sys.stderr)
+    elif upstream.returncode != 0:
+        print(f"Branch {branch} has no upstream", file=sys.stderr)
+    else:
+        upstream = upstream.stdout.strip()
+        counts = git(repo_dir, "rev-list", "--left-right", "--count", "HEAD...@{u}").stdout.split()
+        ahead, behind = (int(c) for c in counts)
+        if ahead == 0 and behind == 0:
+            print(f"Up to date with {upstream}", file=sys.stderr)
+        elif ahead and behind:
+            print(f"Diverged from {upstream}: {ahead} ahead, {behind} behind", file=sys.stderr)
+        elif behind:
+            print(f"Behind {upstream} by {behind} commit(s)", file=sys.stderr)
+        else:
+            print(f"Ahead of {upstream} by {ahead} commit(s)", file=sys.stderr)
+
+    if git(repo_dir, "status", "--porcelain").stdout.strip():
+        print("Working tree has uncommitted changes", file=sys.stderr)
+
 
 def main():
-    root_dir = Path("~/src").expanduser()
+    if len(sys.argv) < 2:
+        sys.exit(__doc__.strip())
 
-    # Parse the clone URL
-    clone_url = furl(sys.argv[1])
-    clone_dir = root_dir / clone_url.host
-    for seg in clone_url.path.segments[:-1]:
-        clone_dir /= seg
-    clone_dir.mkdir(parents=True, exist_ok=True)
+    url, clone_args = sys.argv[1], sys.argv[2:]
+    host, segments = parse_url(url)
+    repo_dir = Path.home() / "src" / host
+    for seg in segments:
+        repo_dir /= seg
 
-    cmd = ["git","clone"]
-    cmd.extend(sys.argv[1:])
-
-    env = os.environ.copy()
-    p = subprocess.Popen(
-        cmd, env=env, cwd=clone_dir.as_posix(), stdin=sys.stdin, stderr=sys.stderr, stdout=sys.stdout
-    )
-    
-    # Attach all signals and forward them to the subprocess
-    def sighandler(signum, stack):
-        p.send_signal(signum)
-
-    for i in [x for x in dir(signal) if x.startswith("SIG")]:
+    if repo_dir.exists():
+        if not (repo_dir / ".git").exists():
+            sys.exit(f"git-clone: {repo_dir} exists but is not a git repository")
+        print(f"{repo_dir} already exists", file=sys.stderr)
+        report_status(repo_dir)
+    else:
+        repo_dir.parent.mkdir(parents=True, exist_ok=True)
         try:
-            signum = getattr(signal, i)
-            signal.signal(signum, sighandler)
-        except (OSError, RuntimeError, ValueError) as m:  # OSError for Python3, RuntimeError for 2
-            #print("Skipping {}".format(i))
-            pass
-    p.wait()
-    sys.stderr.write(clone_dir + 
-    "\n")
+            clone = subprocess.run(["git", "clone", *clone_args, "--", url, repo_dir.as_posix()])
+        except KeyboardInterrupt:
+            sys.exit(130)
+        if clone.returncode != 0:
+            sys.exit(clone.returncode)
+
+    print(repo_dir, file=sys.stderr)
+    os.chdir(repo_dir)
+    shell = os.environ.get("SHELL", "/bin/bash")
+    os.execvp(shell, [shell])
+
 
 if __name__ == "__main__":
     main()
