@@ -1,0 +1,70 @@
+# Packages from my own Launchpad PPAs (https://launchpad.net/~w-rouesnel)
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+    launchpad_user: w-rouesnel
+    personal_ppas:
+    - name: tmux-tabbed-terminal
+      packages: [tmux-tabbed-terminal]
+    - name: landhorse
+      packages: [landhorse]
+    - name: j2live
+      packages: [j2live]
+  tasks:
+  # A PPA with nothing published for this release has no Release file, and
+  # adding it would break every apt update. Skip those until they publish.
+  - name: Check which PPAs publish for this release
+    uri:
+      url: "https://ppa.launchpadcontent.net/{{ launchpad_user }}/{{ item.name }}/ubuntu/dists/{{ ansible_distribution_release }}/Release"
+      method: HEAD
+      status_code: [200, 403, 404]  # 403 for a PPA with nothing published
+    loop: "{{ personal_ppas }}"
+    loop_control:
+      label: "{{ item.name }}"
+    register: personal_ppa_release
+
+  - name: Report PPAs with nothing published yet
+    debug:
+      msg: "ppa:{{ launchpad_user }}/{{ item.item.name }} has nothing published for {{ ansible_distribution_release }} - skipping"
+    loop: "{{ personal_ppa_release.results }}"
+    loop_control:
+      label: "{{ item.item.name }}"
+    when: item.status != 200
+
+  # Each PPA's signing key goes in its own keyring, named by fingerprint, rather
+  # than the deprecated /etc/apt/trusted.gpg that apt_repository's ppa: uses.
+  - name: Get the PPA signing keys
+    uri:
+      url: "https://api.launchpad.net/devel/~{{ launchpad_user }}/+archive/ubuntu/{{ item.item.name }}"
+      return_content: true
+    loop: "{{ personal_ppa_release.results }}"
+    loop_control:
+      label: "{{ item.item.name }}"
+    when: item.status == 200
+    register: personal_ppa_archive
+
+  - name: Download the PPA signing keys
+    get_url:
+      url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ item.json.signing_key_fingerprint }}"
+      dest: "{{ apt_keyring_dir }}/launchpad-ppa-{{ item.json.signing_key_fingerprint }}.asc"
+      mode: "0644"
+    loop: "{{ personal_ppa_archive.results | selectattr('json', 'defined') }}"
+    loop_control:
+      label: "{{ item.item.item.name }}"
+
+  - name: Add the PPAs
+    apt_repository:
+      filename: "ppa-{{ launchpad_user }}-{{ item.item.item.name }}"
+      repo: >-
+        deb [signed-by={{ apt_keyring_dir }}/launchpad-ppa-{{ item.json.signing_key_fingerprint }}.asc]
+        https://ppa.launchpadcontent.net/{{ launchpad_user }}/{{ item.item.item.name }}/ubuntu
+        {{ ansible_distribution_release }} main
+    loop: "{{ personal_ppa_archive.results | selectattr('json', 'defined') }}"
+    loop_control:
+      label: "{{ item.item.item.name }}"
+
+  - name: Install the PPA packages
+    package:
+      name: "{{ personal_ppa_release.results | selectattr('status', 'equalto', 200) | map(attribute='item.packages') | flatten }}"
+      state: latest
