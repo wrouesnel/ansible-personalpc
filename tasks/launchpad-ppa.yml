@@ -1,0 +1,63 @@
+# Add a Launchpad PPA and install packages from it. The PPA's signing key goes
+# in its own keyring under apt_keyring_dir (signed-by), rather than the
+# deprecated /etc/apt/trusted.gpg that apt_repository's ppa: shorthand uses.
+#   vars: launchpad_ppa          - "<owner>/<name>"
+#         launchpad_ppa_packages - packages to install from it (optional)
+# PPAs with nothing published for this release are skipped: they have no
+# Release file, so adding one would break every apt update.
+- name: Check ppa:{{ launchpad_ppa }} publishes for {{ ansible_distribution_release }}
+  uri:
+    url: "https://ppa.launchpadcontent.net/{{ launchpad_ppa }}/ubuntu/dists/{{ ansible_distribution_release }}/Release"
+    method: HEAD
+    status_code: [200, 403, 404]  # 403 for a PPA with nothing published
+  register: launchpad_ppa_release
+
+- name: Skip ppa:{{ launchpad_ppa }}
+  debug:
+    msg: "ppa:{{ launchpad_ppa }} has nothing published for {{ ansible_distribution_release }} - skipping"
+  when: launchpad_ppa_release.status != 200
+
+- when: launchpad_ppa_release.status == 200
+  vars:
+    launchpad_ppa_owner: "{{ launchpad_ppa.split('/')[0] }}"
+    launchpad_ppa_name: "{{ launchpad_ppa.split('/')[1] }}"
+    launchpad_ppa_release_name: "{{ ansible_distribution_release }}"
+  block:
+  # Entries from apt_repository's ppa: shorthand or add-apt-repository would
+  # conflict with this one's signed-by.
+  - name: Remove other sources for ppa:{{ launchpad_ppa }}
+    file:
+      path: "/etc/apt/sources.list.d/{{ launchpad_ppa_source }}"
+      state: absent
+    loop:
+    - "ppa_{{ launchpad_ppa_owner | replace('-', '_') }}_{{ launchpad_ppa_name | replace('-', '_') }}_{{ launchpad_ppa_release_name }}.list"
+    - "{{ launchpad_ppa_owner }}-ubuntu-{{ launchpad_ppa_name }}-{{ launchpad_ppa_release_name }}.list"
+    - "{{ launchpad_ppa_owner }}-ubuntu-{{ launchpad_ppa_name }}-{{ launchpad_ppa_release_name }}.sources"
+    loop_control:
+      loop_var: launchpad_ppa_source
+
+  - name: Get the ppa:{{ launchpad_ppa }} signing key fingerprint
+    uri:
+      url: "https://api.launchpad.net/devel/~{{ launchpad_ppa_owner }}/+archive/ubuntu/{{ launchpad_ppa_name }}"
+      return_content: true
+    register: launchpad_ppa_archive
+
+  - name: Download the ppa:{{ launchpad_ppa }} signing key
+    get_url:
+      url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ launchpad_ppa_archive.json.signing_key_fingerprint }}"
+      dest: "{{ apt_keyring_dir }}/launchpad-ppa-{{ launchpad_ppa_archive.json.signing_key_fingerprint }}.asc"
+      mode: "0644"
+
+  - name: Add ppa:{{ launchpad_ppa }}
+    apt_repository:
+      filename: "ppa-{{ launchpad_ppa_owner }}-{{ launchpad_ppa_name }}"
+      repo: >-
+        deb [signed-by={{ apt_keyring_dir }}/launchpad-ppa-{{ launchpad_ppa_archive.json.signing_key_fingerprint }}.asc]
+        https://ppa.launchpadcontent.net/{{ launchpad_ppa }}/ubuntu
+        {{ launchpad_ppa_release_name }} main
+
+  - name: Install packages from ppa:{{ launchpad_ppa }}
+    package:
+      name: "{{ launchpad_ppa_packages }}"
+      state: latest
+    when: launchpad_ppa_packages | default([]) | length > 0
