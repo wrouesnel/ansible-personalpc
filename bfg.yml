@@ -64,15 +64,16 @@
       dest: "{{ bfg_install_path }}/bfg"
       mode: "755"
 
-  - file:
+  - name: Ensure bin link
+    file:
       src: "{{ bfg_install_path }}/bfg"
-      dest: "{{ user_dirs.bin }}/{{bfg_download_name}}"
+      dest: "{{ user_dirs.bin }}/bfg"
       state: link
 
   - name: Update bfg if needed
     block:
-    - name: Get the download URL for this platform
+    - name: Download the bfg jar
       get_url:
         url: "{{ bfg_download_url }}"
-        dest: "{{ user_dirs.downloads }}/{{ bfg_download_name }}"
+        dest: "{{ bfg_install_path }}/{{ bfg_download_name }}"
     when: bfg_version != local_bfg_version
