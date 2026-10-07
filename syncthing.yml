@@ -10,6 +10,8 @@
       url: https://syncthing.net/release-key.gpg
       dest: "{{syncthing_keyring_location}}"
       mode: "0644"
+      # Always refetch so upstream key rotations are picked up.
+      force: true
   
   - name: Ensure syncthing sources file
     copy:

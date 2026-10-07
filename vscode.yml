@@ -10,6 +10,8 @@
       url: https://packages.microsoft.com/keys/microsoft.asc
       dest: "{{vscode_keyring_location}}"
       mode: "0644"
+      # Always refetch so upstream key rotations are picked up.
+      force: true
   
   - name: Check if the VS Code installed sources file is here
     stat:

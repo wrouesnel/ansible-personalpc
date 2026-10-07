@@ -8,6 +8,8 @@
     get_url:
       url: https://packages.mozilla.org/apt/repo-signing-key.gpg
       dest: "{{apt_keyring_dir}}/packages.mozilla.org.asc"
+      # Always refetch so upstream key rotations are picked up.
+      force: true
 
   - name: Add Firefox repo
     apt_repository:

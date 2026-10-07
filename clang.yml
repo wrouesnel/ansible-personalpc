@@ -7,6 +7,8 @@
     get_url:
       url: https://apt.llvm.org/llvm-snapshot.gpg.key
       dest: "{{apt_keyring_dir}}/llvm-snapshot.gpg.key"
+      # Always refetch so upstream key rotations are picked up.
+      force: true
 
   - name: Add Clang Repo
     apt_repository:

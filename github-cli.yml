@@ -4,10 +4,12 @@
   connection: local
   become: true
   tasks:
-  - name: Download Clang Key
+  - name: Download Github CLI Key
     get_url:
       url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
       dest: "{{apt_keyring_dir}}/githubcli-archive-keyring.gpg"
+      # Always refetch so upstream key rotations are picked up.
+      force: true
 
   - name: Add Github CLI Repo
     apt_repository:

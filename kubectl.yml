@@ -7,6 +7,8 @@
     get_url:
       url: "https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key"
       dest: "{{apt_keyring_dir}}/kubernetes-apt-keyring.key"
+      # Always refetch so upstream key rotations are picked up.
+      force: true
 
   - name: Install K8S repository
     apt_repository:
