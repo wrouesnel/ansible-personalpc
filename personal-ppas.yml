@@ -23,3 +23,17 @@
     loop_control:
       loop_var: personal_ppa
       label: "{{ personal_ppa.name }}"
+
+  # libpam-mfa-keyring recommends sssd, and libpam-sss depends on
+  # libpam-pwquality, whose PAM profile enables itself on install. We don't
+  # want password strength checks for now, so keep that profile disabled.
+  - name: Check if pam_pwquality is enabled
+    command: grep -q pam_pwquality.so /etc/pam.d/common-password
+    register: pam_pwquality_enabled
+    failed_when: pam_pwquality_enabled.rc > 1
+    changed_when: false
+    check_mode: false
+
+  - name: Disable the pam_pwquality profile
+    command: pam-auth-update --disable pwquality
+    when: pam_pwquality_enabled.rc == 0
