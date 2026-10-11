@@ -10,6 +10,10 @@
       packages: [landhorse]
     - name: w-rouesnel/j2live
       packages: [j2live]
+    - name: w-rouesnel/podman-desktop-ext
+      packages: [podman-desktop-ext]
+    - name: w-rouesnel/mfa-keyring
+      packages: [mfa-keyring, libpam-mfa-keyring]
   tasks:
   - include_tasks: tasks/launchpad-ppa.yml
     vars:
