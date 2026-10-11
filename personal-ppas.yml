@@ -15,6 +15,13 @@
     - name: w-rouesnel/mfa-keyring
       packages: [mfa-keyring, libpam-mfa-keyring]
   tasks:
+  - name: Check if pam_pwquality is enabled before installing
+    command: grep -q pam_pwquality.so /etc/pam.d/common-password
+    register: pam_pwquality_before
+    failed_when: pam_pwquality_before.rc > 1
+    changed_when: false
+    check_mode: false
+
   - include_tasks: tasks/launchpad-ppa.yml
     vars:
       launchpad_ppa: "{{ personal_ppa.name }}"
@@ -26,14 +33,15 @@
 
   # libpam-mfa-keyring recommends sssd, and libpam-sss depends on
   # libpam-pwquality, whose PAM profile enables itself on install. We don't
-  # want password strength checks for now, so keep that profile disabled.
-  - name: Check if pam_pwquality is enabled
+  # want password strength checks for now, so undo that if these installs
+  # turned it on, but leave it alone if it was already enabled.
+  - name: Check if pam_pwquality is enabled after installing
     command: grep -q pam_pwquality.so /etc/pam.d/common-password
-    register: pam_pwquality_enabled
-    failed_when: pam_pwquality_enabled.rc > 1
+    register: pam_pwquality_after
+    failed_when: pam_pwquality_after.rc > 1
     changed_when: false
     check_mode: false
 
   - name: Disable the pam_pwquality profile
     command: pam-auth-update --disable pwquality
-    when: pam_pwquality_enabled.rc == 0
+    when: pam_pwquality_before.rc != 0 and pam_pwquality_after.rc == 0
