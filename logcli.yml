@@ -5,11 +5,17 @@
   - name: Get the latest logcli release
     set_fact:
       loki_releases: |
-        {{ query("github_releases", user="grafana", repo="loki", latest=1)[0] }}
+        {{ query("github_releases", user="grafana", repo="loki", latest=10)[0] }}
 
+  # grafana/loki tags releases for several components in the one repo
+  # (operator/vX.Y.Z, helm-loki-X.Y.Z, chunks-inspect/vX.Y.Z), and any of them
+  # can be the most recent, so select the highest plain vX.Y.Z release instead.
   - name: Get the current logcli version
     set_fact:
-      loki_version: "{{ loki_releases.in_order[0]['tag_name'].lstrip('v') }}"
+      loki_version: >-
+        {{ (loki_releases.in_order | map(attribute='tag_name')
+            | select('match', '^v\d+\.\d+\.\d+$')
+            | community.general.version_sort | last).lstrip('v') }}
 
   - name: Get current loki names
     set_fact:
