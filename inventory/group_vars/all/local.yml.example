@@ -22,6 +22,10 @@
 # Install the X2Go server (x2go-server.yml).
 #x2go_server: true
 
+# Install the JetBrains IDEs (jetbrains.yml). Defaults to true (shared.yml);
+# set false on machines which don't need them - it's a multi-GB download.
+#jetbrains_install: false
+
 network:
   # Local network domain. When set:
   # - apt and proxydetect look for a proxy at <domain>:3128

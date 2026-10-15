@@ -17,6 +17,9 @@ persistent_user_config:
 
 apt_keyring_dir: /etc/apt/keyrings
 
+# Install the JetBrains IDEs listed in jetbrains.yml.
+jetbrains_install: true
+
 # Desktop environment to install and configure. Each one has a
 # desktop-<name>.yml and dconf-restore-<name>.yml playbook.
 desktop_environment: cinnamon

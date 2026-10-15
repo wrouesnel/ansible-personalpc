@@ -34,6 +34,7 @@
 
 - import_playbook: golang.yml
 - import_playbook: jetbrains.yml
+  when: jetbrains_install|default(True)|bool
 - import_playbook: freecad.yml
 - import_playbook: rust.yml
 
