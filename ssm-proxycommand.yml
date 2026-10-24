@@ -1,0 +1,64 @@
+# SSH ProxyCommand over AWS SSM Session Manager
+- hosts: localhost
+  connection: local
+  become: false
+  tasks:
+  - name: Get the latest ssm-proxycommand release
+    set_fact:
+      ssm_proxycommand_releases: |
+        {{ query("github_releases", user="wrouesnel", repo="ssm-proxycommand", latest=1)[0] }}
+
+  - name: Get the current ssm-proxycommand version
+    set_fact:
+      ssm_proxycommand_version: "{{ ssm_proxycommand_releases.in_order[0]['tag_name'].lstrip('v') }}"
+
+  - name: Get current ssm-proxycommand names
+    set_fact:
+      ssm_proxycommand_download_name: >-
+        ssm-proxycommand_v{{ ssm_proxycommand_version }}_linux-{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}.get(ansible_architecture, ansible_architecture) }}.tar.gz
+      ssm_proxycommand_install_path: "{{ user_dirs.opt }}/ssm-proxycommand"
+
+  - name: Check current ssm-proxycommand version
+    block:
+    - file:
+        path: "{{ ssm_proxycommand_install_path }}"
+        state: directory
+
+    - stat:
+        path: "{{ ssm_proxycommand_install_path }}/ssm-proxycommand"
+      register: ssm_proxycommand_exe
+
+    - shell: "{{ ssm_proxycommand_install_path }}/ssm-proxycommand --version"
+      register: ssm_proxycommand_exe_version
+      when: ssm_proxycommand_exe.stat.exists
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        local_ssm_proxycommand_version: "{{ ssm_proxycommand_exe_version.stdout.strip().lstrip('v') }}"
+      when: ssm_proxycommand_exe.stat.exists
+
+    - set_fact:
+        local_ssm_proxycommand_version: "0.0.0"
+      when: not ssm_proxycommand_exe.stat.exists
+
+  - name: Update ssm-proxycommand if needed
+    block:
+    - name: Download and extract ssm-proxycommand
+      unarchive:
+        src: "{{ ssm_proxycommand_releases.asset_by_tag['v' + ssm_proxycommand_version][ssm_proxycommand_download_name].browser_download_url }}"
+        dest: "{{ ssm_proxycommand_install_path }}"
+        remote_src: yes
+        extra_opts:
+        - --strip-components=1
+
+    - file:
+        path: "{{ ssm_proxycommand_install_path }}/ssm-proxycommand"
+        mode: "0755"
+    when: ssm_proxycommand_version != local_ssm_proxycommand_version
+
+  - name: Ensure symlink
+    file:
+      src: "{{ ssm_proxycommand_install_path }}/ssm-proxycommand"
+      dest: "{{ user_dirs.bin }}/ssm-proxycommand"
+      state: link
